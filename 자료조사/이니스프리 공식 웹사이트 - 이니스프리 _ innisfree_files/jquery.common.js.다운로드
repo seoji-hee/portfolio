@@ -1,0 +1,742 @@
+/**********************************************************************************
+ *    Program ID   : jquery.common.js
+ *    Description  : Utility Method정의
+ *    lib : jquery-1.9.2.min.js
+ **********************************************************************************
+ *		Date						Author				Description
+ *	2016/02/01				IBANK				초기작성
+ **********************************************************************************/
+
+//폼 밸리데이션 에러 클래스 및 태그 지정
+var formValidErrClass = "inputAlt";
+var formValidErrTag = "p";
+var formValidElementErrClass = "inputError";
+var loadingState = false;
+
+(function($) {
+/*
+ * 호출 한 곳에서의 error함수가 먼저 수행되고 난 후 수행 됨 ( 둘다 작동 )
+ * event - contains the event object
+ * xhr - contains the XMLHttpRequest object
+ * options - contains the options used in the AJAX request
+ * exc - contains the JavaScript exception, if one occured
+ */
+//$(document).ajaxError(function (event, xhr, options, exc) {
+//   alert('ajaxError' + xhr.status);
+//});
+	
+/**
+ * Ajax전송 전 공통 핸들링 함수
+ * 1. 로딩바 호출 - jquery.common.js에 선언
+ * 2. Ajax 공통 에러 처리 ( 호출 한 곳에서 error함수를 선언하면 실행되지 않음.  )
+ */
+var loadingInter;
+var loadingTimer;
+var errorState = true;
+$.ajaxSetup({
+	beforeSend: function(xhr) {
+		xhr.setRequestHeader("AJAX", true);
+		//2106.08.23 by thkim csrf token 추가
+		//xhr.setRequestHeader("CSRFTOKEN", $("meta[name='_xSiteSecToken']").attr("content"));
+		
+		//로딩바 호출
+		if(loadingState == false) {
+			if(loadingTimer) {clearTimeout(loadingTimer);} 
+			loadingTimer = setTimeout(function(){
+				$('.loadingArea').show();
+			},2000);
+		} else {
+			$('.loadingArea').show();
+		}
+	},
+	error: function(xhr, status, err) {
+		if(errorState != false){ 
+			if (xhr.status == 901) {		//로그인 페이지로 이동
+				$.jhead.fnChkLoginPage();
+			} else {
+				$.jcom.showCommonLayer("처리 중 장애가 발생하였습니다. 잠시 후 재시도 후에도 지속적인 문제 발생 시 고객센터로 문의 바랍니다.");
+			}
+		}
+	},
+	complete : function() {
+		//로딩 바 숨김
+		clearTimeout(loadingTimer);
+		loadingState = false;
+		$('.loadingArea').fadeOut(250);
+	}
+});
+
+$.extend({
+	jcom : {
+		//제품 찜하기
+		saveJim : function(prdSeqArr, prdSeq, myshop_yn, myShopRegFl) {
+		/*if (myshop_yn == 'Y' && myShopRegFl != 'Y') {
+			layerOpen('myShopInfoPop');
+			return;
+		}*/
+		var paramPrdSeq = prdSeq.slice(0,-1);
+		var myShopPrdFl = $.jcom.getMyShopYn(paramPrdSeq);
+		var myshop = myShopPrdFl.split("|");
+		var myShopCode = myshop[0];	//마이샵 조회 결과 코드
+		var myShopFl = myshop[1];	//마이샵 가입여부
+		var firstMyshopYn = myshop[2];	//마이샵 첫구매 제품 여부
+		var firstYn = myshop[3];   // 첫구매 제품 여부
+		var firstYearYn = myshop[4];  //당해 첫 구매 제품 여부
+		var groupCampaignYn = myshop[5];  //그룹캠페인 해당 여부
+		var appFirstYn = myshop[12];  //앱 첫구매 제품 여부
+		
+		if(firstYn == "Y"){
+			var firstPurchaseFl = $.jcom.getFirstPurYn();
+			var firstPurchData = firstPurchaseFl.split("|");
+			var cnt = firstPurchData[0];
+			var ordDate = firstPurchData[1];
+			if(cnt > 0){
+				$("#firstPurchasePop").find(".layerWrap .alertCont .txt4").html("해당 제품은 공식 온라인몰 첫 구매 전용제품입니다.");
+				$("#firstPurchasePop").find(".layerWrap .alertCont .txt2").html("(고객님의 공식 온라인몰 최근 구매 일자: "+ordDate+")");
+				layerOpen('firstPurchasePop');
+				return "false";
+			}
+		}else if(firstYearYn == "Y"){
+			var firstPurInThisYearFl = $.jcom.getFirstPurInThisYearYn();
+			var firstPurchDataInThisYear = firstPurInThisYearFl.split("|");
+			var cnt = firstPurchDataInThisYear[0];
+			var ordDate = firstPurchDataInThisYear[1];
+			if(cnt > 0){
+				$("#firstYearPurchasePop").find(".layerWrap .alertCont .txt4").html("해당 제품은 공식 온라인몰 올해 첫 구매 전용제품입니다.");
+				$("#firstYearPurchasePop").find(".layerWrap .alertCont .txt2").html("(고객님의 공식 온라인몰 올해 최근 구매 일자: "+ordDate+")");
+				layerOpen('firstYearPurchasePop');
+				return "false";
+			}
+		} 
+		
+		if (myShopCode =="Y"  && myShopFl != "Y") {
+			layerOpen('myShopInfoPop');
+			return "false";
+		}else{
+			if(firstMyshopYn == "Y"){
+				var myshopFirst = $.jcom.getMyshopFirstPurYn();
+				var myshopData = myshopFirst.split("|");
+				var cnt = myshopData[0];
+				var ordDate = myshopData[1];
+				if(cnt > 0){
+					$("#myShopFirstJoinPop").find(".layerWrap .alertCont .txt4").html("해당 제품은 공식 온라인몰 </br>MYSHOP 등록 후 첫 구매 전용제품입니다.");
+					$("#myShopFirstJoinPop").find(".layerWrap .alertCont .txt2").html("(고객님의 공식 온라인몰 MYSHOP </br>최근 구매 일자: "+ordDate+")");
+					layerOpen('myShopFirstJoinPop');
+					return "false";
+				}
+			}
+		}
+		if(groupCampaignYn == "Y"){
+			var oneData = $.jcom.getPurchaselimitOneData(paramPrdSeq);
+			var totalCnt = 0;
+			if(oneData.length > 0){
+				var limitQty = oneData[0].qty;
+				for(var i = 0; i< oneData.length;i++){
+					totalCnt += oneData[i].cnt;
+				}
+				if(totalCnt  >= limitQty){
+					$.jcom.showCommonLayer("구매할 수 없는 상품이 포함되어 있습니다.</br>해당 이벤트의 유의사항을 다시 확인해주세요.");
+					return "false";
+				}
+			}
+			
+		}
+		
+		if(appFirstYn == "Y"){
+			var appFirstPurchaseFl = $.jcom.getAppFirstPurYn(paramPrdSeq);
+			var appFirstPurchData = appFirstPurchaseFl.split("|");
+			var cnt = appFirstPurchData[0];
+			var ordDate = appFirstPurchData[1];
+			if(cnt > 0){
+				$("#firstPurchasePop").find(".layerTitle").html("앱 첫 구매 전용 제품");
+				$("#firstPurchasePop").find(".layerWrap .alertCont .txt4").html("해당 제품은 앱 첫 구매 전용제품입니다.");
+				$("#firstPurchasePop").find(".layerWrap .alertCont .txt2").html("(고객님의 앱 최근 구매 일자: "+ordDate+")");
+				layerOpen('firstPurchasePop');
+				return "false";
+			}
+		}
+			$.ajax({
+				type : 'post',
+				data : { 'prdSeqArr' : prdSeqArr },
+				url : '/kr/ko/ProductJimExecute.json',
+//				error : function(e) { console.log(e); },
+				success : function(data) {
+					var code = data.productBean.r_code;
+					if(code == 'Y') {	// 찜하기
+						//if(prdSeqArr==prdSeq){
+							//하트 색칠
+						//}
+						//layerOpen('wishEndPop');
+						//$(obj).addClass('on');
+					} else if(code == 'C') {	// 찜취소
+						//if(prdSeqArr==prdSeq) {
+							//하트 투명
+						//}
+					} else if(code == "M") {	// 미 로그인시
+						$.jhead.fnChkLoginPage();
+					} else { // 에러
+					}
+				}
+			});
+		},
+		// 제품 추천하기
+		saveRcm : function(seq, obj, no_ref_flag) {
+			$('.inputAlt').hide();
+			$.ajax({
+				url : '/kr/ko/ProductReviewRcmCheck.json',
+				type : 'post',
+				data : {reviewSeq : seq},
+				success : function(data){
+					var code = data.productReviewBean.r_code;
+					if(code == "R"){	//	추천 완료
+						/*$(obj).addClass("on");
+						$(obj).find('b').html(data.productReviewBean.recomCnt);*/
+						
+						var seqs=$(obj).attr('reviewseq');
+						console.log(seqs);
+						//$("a[reviewseq="+seqs+"]").addClass('on');
+						//$("a[reviewseq="+seqs+"]").children("span").addClass('on');
+						//$("a[reviewseq="+seqs+"]").find("b").text(data.productReviewBean.recomCnt);
+						$("a[reviewseq="+seqs+"]").children("span").addClass('on');
+						$("a[reviewseq="+seqs+"]").children("span").html('<span class="ico">찜수</span>'+data.productReviewBean.recomCnt);
+						/*if($("a[reviewseq="+seqs+"]").size()>1){
+							onOffSet("on",data.productReviewBean.recomCnt,seqs);
+						}*/
+						
+						//if(no_ref_flag == 'N')	{
+							/*$(obj).find('span[name=h_cnt]').html(data.productReviewBean.recomCnt);	*/
+						//} else {
+						//	srchPhoto();
+						//}
+						
+					} else if(code == "D"){	// 추천 취소 완료
+						/*$(obj).removeClass("on");
+						$(obj).find('b').html(data.productReviewBean.recomCnt);*/
+						
+						var seqs=$(obj).attr('reviewseq');
+						console.log(seqs);
+						//$("a[reviewseq="+seqs+"]").removeClass('on');
+						$("a[reviewseq="+seqs+"]").children("span").removeClass('on');
+						$("a[reviewseq="+seqs+"]").children("span").html('<span class="ico">찜수</span>'+data.productReviewBean.recomCnt);
+						/*if($("a[reviewseq="+seqs+"]").size()>1){
+							onOffSet("",data.productReviewBean.recomCnt,seqs);
+						}*/
+						
+						//if(no_ref_flag == 'N')	{
+							/*$(obj).find('span[name=h_cnt]').html(data.productReviewBean.recomCnt);	*/
+						//} else {
+						//	srchPhoto();
+						//}
+					} else if (code == "M") {
+						$.jhead.fnChkLoginPagePop();
+					} else {
+						//$(obj).parent().find('p').html(data.productReviewBean.r_message);
+						//$(obj).parent().find('p').show();
+                        alert(data.productReviewBean.r_message);
+					}
+				}
+			});
+		},
+		//html 레이어페이지 생성 후 팝업 영역에 붙여서 호출하는 경우
+		showLayerPop : function(data, id, inx) {
+			//팝업 레이어가 있는 경우 레이어 닫기
+//			layerPopClose();			
+//			$("#"+id).html(data).promise().done(function() {//결과 페이지 레이어 호출
+//				console.log("id : " + $("#"+id));
+//				$("#"+id).show();
+//				layerPop(id);	
+//			});			
+			//아이디가 있는 경우 아이디값에 attach  
+			if (id && id != undefined) {
+				//$(".popArea #"+id).html(data).promise().done(function() {//결과 페이지 레이어 호출
+				$("#"+id).html(data).promise().done(function() {//결과 페이지 레이어 호출
+					layerOpen($(this).find("div").attr("id"));	
+				});
+				return;
+			}
+			
+			//아이디 값이 없는 경우 첫번째 popAreaBox객체에 attach - 순서값이 있는 경우 순서값번째에 attach
+			if (!inx) { inx = 0; }
+			$(".popArea .popAreaBox").eq(inx).html(data).promise().done(function() {//결과 페이지 레이어 호출
+				layerOpen($(this).find("div").attr("id"));	
+			});
+		},		
+		//단순 레이어 호출 하는 경우 (show/hide )
+		showCommonLayer : function(message, title, lnk) {
+			//팝업 레이어가 있는 경우 레이어 닫기
+//			layerClose();
+//			if(title === "MyShop등록 알림"){   //MyShop등록 알림은 .html로
+//				$("#commonPopup").find(".popPadding .popCon .txt1").html(message);
+//			} else {
+//				$("#commonPopup").find(".popPadding .popCon .txt1").text(message);
+//			}
+//			$("#commonPopup").find(".popPadding .popTit").text((typeof title != 'string')?"알림":title);
+//			if (lnk != undefined) {
+//				$("#commonPopup").find("#commonPopupBtn").attr("href", lnk);
+//			}
+//			layerOpen("commonPopup");
+			if(title === "MyShop등록 알림"){   //MyShop등록 알림은 .html로
+				$("#commonPopup").find(".layerWrap .alertCont .txt4").html(message);
+			} else {
+				$("#commonPopup").find(".layerWrap .alertCont .txt4").html(message);
+			}
+			$("#commonPopup").find(".layerWrap .layerTitle").text((typeof title != 'string')?"알림":title);
+			if (lnk != undefined) {
+				$("#commonPopup").find("#commonPopupBtn").attr("onclick", "location.href='"+lnk+"'");
+			}
+			layerOpen("commonPopup");
+		},
+		//단순 레이어 호출 하는 경우 (show/hide )
+		showCommonConfirmLayer : function(message, title) {	
+			if(title === "OK캐쉬백 알람"){   //ok캐쉬백알람은 .html로
+				$("#commonConfirmPopup").find(".layerWrap .alertCont .txt4").html(message);
+			}else{
+				$("#commonConfirmPopup").find(".layerWrap .alertCont .txt4").text(message);
+			}
+			$("#commonConfirmPopup").find(".layerWrap .layerTitle").text((typeof title != 'string') ? "알림" : title);
+			layerOpen("commonConfirmPopup");
+		},
+		//도로명주소 :: 20140708 우편번호검색
+		callNewRoadZipCodePopup : function(popAreaId){
+//			var url = "/program/newRoadZipCode_Web/newRoadZipCodePopup.jsp";
+			var url = "/kr/ko/program/zipCode/web/newRoadZipCodePopup.jsp";
+			$.post(url, function(data) {				
+				$.jcom.showLayerPop(data, popAreaId);
+			});
+		},
+		formValidHighlight : function(element, errorClass, validClass) {
+			//selectarea의 경우 에러 클래스 등록
+			$(element).closest("td").find(".selectArea button").addClass("inputError");
+			$(element).removeClass(errorClass).removeClass(validClass);	//에러 발생 인 경우 요소의 inputAlt 클래스 제거하고 inputError 클래스 추가
+			//에러 메세지 표시
+		    $(element.form).find(formValidErrTag + "[for=" + element.id + "]").addClass(errorClass);
+		    $(element).addClass(formValidElementErrClass);
+		},
+		formValidUnHighlight : function(element, errorClass, validClass) {
+			$(element).closest("td").find(".selectArea button").removeClass("inputError");
+			$(element).removeClass(errorClass).addClass(validClass);		//에러 발생이 아닌 경우 요소의 inputAlt 클래스 제거하고 inputError 클래스 제거
+			//에러 메세지 숨기기
+		    $(element.form).find(formValidErrTag + "[for=" + element.id + "]").removeClass(errorClass);
+		    $(element).removeClass(formValidElementErrClass);
+		},
+		//폼 밸리데이션 에러 문구 초기화
+		resetFormMessage : function(formObj) {
+			$(formObj).find(".inputError").removeClass("inputError");
+			$(formObj).find(".inputAlt").hide();
+		},
+		/*
+		 * 에러 문구 보이기
+		 * { message : '', targetId : '' }
+		 * param.message : 에러 메세지 문구
+		 * param.targetId : 에러 메세지 문구가 보여질 영역 아이디
+		 * param.element : 에러 객체 ( 폼 밸리데이션의 경우 input, select 와 같은 객체에 error클래스 지정이 필요한 경우 )
+		 */
+		showFormMessage : function(param) {
+			if (param.element && param.element != undefined) {
+				//셀렉트(radio) 영역과 일반 구분해서 처리				
+				if ($(param.element).parent().parent().hasClass("selList")) {
+					$(param.element).closest(".selectArea").find("button").addClass("inputError");
+				}
+				else {
+					$(param.element).addClass("inputError");
+				}				
+				$(param.element).focus();
+			}	
+			if (param.message && param.message != undefined) {
+				$(param.targetId).text(param.message);
+			}	
+			$(param.targetId).show();			
+		},
+		//에러 문구 숨기기
+		hideFormMessage : function(param) {
+			if (param.element && param.element != undefined) {
+				$(param.element).closest("td").find(".selectArea button").removeClass("inputError");
+				$(param.element).removeClass("inputError");
+			}	
+			$(param.targetId).hide();			
+		},
+		/*
+		 * 장바구니 담기
+		 */
+		cartAdd : function(mode, prdList, callback) {
+			if(prdList.length>0){
+				var myShopPrdFl = $.jcom.getMyShopYn(prdList[0].prdSeq);
+				var myshop = myShopPrdFl.split("|");
+				var myShopCode = myshop[0];	//마이샵 조회 결과 코드
+				var myShopFl = myshop[1];	//마이샵 가입여부
+				var firstMyshopYn = myshop[2];	//마이샵 첫구매 제품 여부
+				var firstYn = myshop[3];   // 첫구매 제품 여부
+				var firstYearYn = myshop[4];  //당해 첫 구매 제품 여부
+				var groupCampaignYn = myshop[5];  //그룹캠페인 해당 여부
+				var purHistCustPurPsblYn = myshop[6];  //구매 이력 포함 사용여부
+				var npurHistCustPurPsblYn = myshop[7];  //구매 이력 제외 사용여부
+				var appFirstYn = myshop[12];  //앱 첫구매 제품 여부
+				
+				if(firstYn == "Y"){
+					var firstPurchaseFl = $.jcom.getFirstPurYn();
+					var firstPurchData = firstPurchaseFl.split("|");
+					var cnt = firstPurchData[0];
+					var ordDate = firstPurchData[1];
+					if(cnt > 0){
+						$("#firstPurchasePop").find(".layerWrap .alertCont .txt4").html("해당 제품은 공식 온라인몰 첫 구매 전용제품입니다.");
+						$("#firstPurchasePop").find(".layerWrap .alertCont .txt2").html("(고객님의 공식 온라인몰 최근 구매 일자: "+ordDate+")");
+						layerOpen('firstPurchasePop');
+						return;
+					}
+				}else if(firstYearYn == "Y"){
+					var firstPurInThisYearFl = $.jcom.getFirstPurInThisYearYn();
+					var firstPurchDataInThisYear = firstPurInThisYearFl.split("|");
+					var cnt = firstPurchDataInThisYear[0];
+					var ordDate = firstPurchDataInThisYear[1];
+					if(cnt > 0){
+						$("#firstYearPurchasePop").find(".layerWrap .alertCont .txt4").html("해당 제품은 공식 온라인몰 올해 첫 구매 전용제품입니다.");
+						$("#firstYearPurchasePop").find(".layerWrap .alertCont .txt2").html("(고객님의 공식 온라인몰 올해 최근 구매 일자: "+ordDate+")");
+						layerOpen('firstYearPurchasePop');
+						return;
+					}
+				} 
+				if (myShopCode =="Y"  && myShopFl != "Y") {
+					layerOpen('myShopInfoPop');
+					return;
+				}else{
+					if(firstMyshopYn == "Y"){
+						var myshopFirst = $.jcom.getMyshopFirstPurYn();
+						var myshopData = myshopFirst.split("|");
+						var cnt = myshopData[0];
+						var ordDate = myshopData[1];
+						if(cnt > 0){
+							$("#myShopFirstJoinPop").find(".layerWrap .alertCont .txt4").html("해당 제품은 공식 온라인몰 </br>MYSHOP 등록 후 첫 구매 전용제품입니다.");
+							$("#myShopFirstJoinPop").find(".layerWrap .alertCont .txt2").html("(고객님의 공식 온라인몰 MYSHOP </br>최근 구매 일자: "+ordDate+")");
+							layerOpen('myShopFirstJoinPop');
+							return;
+						}
+					}
+				}
+				if(groupCampaignYn == "Y"){
+					var oneData = $.jcom.getPurchaselimitOneData(prdList[0].prdSeq);
+					var totalCnt = 0;
+					if(oneData.length > 0){
+						var limitQty = oneData[0].qty;
+						for(var i = 0; i< oneData.length;i++){
+							totalCnt += oneData[i].cnt;
+						}
+						if(totalCnt  >= limitQty){
+							$.jcom.showCommonLayer("구매할 수 없는 상품이 포함되어 있습니다.</br>해당 이벤트의 유의사항을 다시 확인해주세요.");
+							return;
+						}
+					}
+				}
+				
+				if(purHistCustPurPsblYn == "Y" || npurHistCustPurPsblYn == "Y"){
+					var purCondPrdCnfmYn = $.jcom.getPurCondPrdCnfmYn(prdList[0].prdSeq);
+					if(purCondPrdCnfmYn != 'Y'){
+						$.jcom.showCommonLayer("해당 제품은 구매 제한이 있는 상품입니다<br>유의사항을 다시 확인해주세요.");
+						return "false";
+					}
+				}
+				
+				if(appFirstYn == "Y"){
+					var appFirstPurchaseFl = $.jcom.getAppFirstPurYn(prdList[0].prdSeq);
+					var appFirstPurchData = appFirstPurchaseFl.split("|");
+					var cnt = appFirstPurchData[0];
+					var ordDate = appFirstPurchData[1];
+					if(cnt > 0){
+						$("#firstPurchasePop").find(".layerTitle").html("앱 첫 구매 전용 제품");
+						$("#firstPurchasePop").find(".layerWrap .alertCont .txt4").html("해당 제품은 앱 첫 구매 전용제품입니다.");
+						$("#firstPurchasePop").find(".layerWrap .alertCont .txt2").html("(고객님의 앱 최근 구매 일자: "+ordDate+")");
+						layerOpen('firstPurchasePop');
+						return "false";
+					}
+				}
+			}
+			
+			
+			
+			var prodInfo = JSON.stringify({prductJson : prdList}).replace(/\"/g,'&quot');
+			var cartUrl = "/kr/ko/OrderCartRegistProc.json";
+			if(mode === "ORDER" || mode === "POPORDER") cartUrl = "/kr/ko/OrderOneClickProc.json";
+			$.ajax({
+				url : cartUrl,
+				type : "post",
+				data : {
+					mode : mode,
+					prodInfo : prodInfo,
+					reviewSeq : $("#reviewSeq").val()
+				},
+				success : function(data) {
+					
+					if (typeof callback === "function") {//콜백 함수가 선언 된 경우 결과 값 리턴
+						callback(data);
+					}
+					else {//콜백 함수가 없는 경우 디폴트 에러 메세지 처리
+						//2016.07.26 by thkim 각 페이지에서 처리되던 방식을 공통 스크립트에서 처리 되도록 변경
+						$.jcom.cartResult(data);
+					}
+					var pixelSum = $("#sum").text() == '' ? $("#totSum").text().replace('원','').trim() : $("#sum").text().replace('원','').trim();
+					try{
+						if(prdList.length>0){
+							fbq('track', 'AddToCart', {
+								content_ids: [prdList[0].prdSeq],
+								content_type: 'product',
+								value: pixelSum,
+								currency: 'KRW' 
+							});
+						}
+					  }catch(exception){
+					  }
+				}
+			});
+		},
+		cartResult : function(data) {
+			var r_code = data.orderBean.r_code;
+			
+			if (r_code === 'CART_SUCCESS') {
+				layerOpen('addCartEndPop');
+			} else if (r_code === 'NOT_MATCH_MULTIPUR_COND') {
+				$.jcom.showCommonLayer("복수구매 할인 제품입니다. 제품상세 페이지로 이동하셔서 장바구니 담기를 진행해 주세요.");
+			} else if (r_code === null) {
+				$.jcom.showCommonLayer("서버 오류로 인해 장바구니 담기에 실패 하였습니다.");
+			} else {
+				$.jcom.showCommonLayer(data.orderBean.r_message);
+			}
+		},
+		/*
+		 * 마이샵 등록회원만 구매가능한 제품인지 조회
+		 */
+		getMyShopYn : function(prdSeq) {
+			//var myShopPrdFl = false;
+			var myShopPrdFl = "";
+			$.ajax({
+				type : 'post',
+				data : { 'prdSeq' : prdSeq },
+				url : '/kr/ko/ProductGetMyShopYn.json',
+				async : false,
+				error : function(e) { 
+					//console.log(e);
+				},
+				success : function(data) {
+					var code = data.productBean.r_code;
+					var myShopRegFl = data.productBean.myShopRegFl;
+					/*if (code == 'Y' && myShopRegFl != 'Y') {
+						myShopPrdFl = true;
+					}*/
+					myShopPrdFl = code+"|"+myShopRegFl+"|"+data.productBean.myshop_first_pur_yn+"|"+data.productBean.first_pur_yn+"|"+data.productBean.year_first_pur_yn+"|"+data.productBean.group_campaign_yn+"|"+data.productBean.purHistCustPurPsblYn+"|"+data.productBean.npurHistCustPurPsblYn+"|"+data.productBean.inmPrdFreeExpeTpCd+"|"+data.productBean.inmPrdFreeExpeLmtdTxt+"|"+data.productBean.minpurType+"|"+data.productBean.minPurText+"|"+data.productBean.app_first_pur_yn;
+				}
+			});
+			
+			return myShopPrdFl;
+		},
+		
+		//2019.01.17 마이샵 첫 등록회원만 구매가능한 제품인지 조회 pmj
+		getMyshopFirstPurYn : function() {
+			var myShopData;
+			$.ajax({
+				type : 'post',
+				url : '/kr/ko/ProductGetMyshopFirstPurYn.json',
+				async : false,
+				error : function(data) { 
+					//console.log(e);
+				},
+				success : function(data) {
+					var ordDate = data.myshopData.ordDate;
+					myShopData = data.myshopData.cnt+"|"+ordDate;
+				}
+			});
+			
+			return myShopData;
+		},
+		
+		//2019.01.17 온라인 첫 구매가능한 제품인지 조회 pmj
+		getFirstPurYn : function(prdSeq) {
+			var firstPurData;
+			$.ajax({
+				type : 'post',
+				url : '/kr/ko/ProductGetFirstPurYn.json',
+				async : false,
+				error : function(e) { 
+					//console.log(e);
+				},
+				success : function(data) {
+					firstPurData = data.firstPurBean.cnt+"|"+data.firstPurBean.ordDate;
+				}
+			});
+			return firstPurData;
+		},
+		
+		//2019.01.17 당해 첫 구매가능한 제품인지 조회 pmj
+		getFirstPurInThisYearYn : function(prdSeq) {
+			var firstPurDataInThisYear;
+			$.ajax({
+				type : 'post',
+				url : '/kr/ko/ProductGetFirstPurInThisYearYn.json',
+				async : false,
+				error : function(e) { 
+					//console.log(e);
+				},
+				success : function(data) {
+					firstPurDataInThisYear = data.firstPurInThisYearBean.cnt+"|"+data.firstPurInThisYearBean.ordDate;
+				}
+			});
+			return firstPurDataInThisYear;
+		},
+		
+		//2019.01.17 구매개수 제한 캠페인 campaign_seq 조회 pmj
+		getGroupCampaignSeq : function(prdSeq) {
+			var campaignSeq = "";
+			$.ajax({
+				type : 'post',
+				data : { 'prdSeq' : prdSeq },
+				url : '/kr/ko/ProductGetGroupCampaignSeq.json',
+				async : false,
+				error : function(e) { 
+					//console.log(e);
+				},
+				success : function(data) {
+					campaignSeq = data.groupCampaign;
+				}
+			});
+			
+			return campaignSeq;
+		},
+		
+		//2019.01.17 조회한 campaign_seq의 구매개수 제한 캠페인 정보 조회 pmj
+		getGroupCampaignInfo : function(campaignSeq) {
+			var campaignObj =  ""
+			$.ajax({
+				type : 'post',
+				data : { 'campaign_seq' : campaignSeq },
+				url : '/kr/ko/ProductGetGroupCampaignInfo.json',
+				async : false,
+				error : function(e) {
+					//console.log(e);
+				},
+				success : function(data) {
+					campaignObj = data.groupCampaignInfo;
+				}
+			});
+			
+			return campaignObj;
+		},
+		
+		//2019.01.17 조회한 campaign_seq의 구매개수 제한 prdSeq 조회 pmj
+		getCampaignIncludePrdSeq : function(campaignSeq) {
+			var prdSeqArr =  new Object();
+			$.ajax({
+				type : 'post',
+				data : { 'campaign_seq' : campaignSeq },
+				url : '/kr/ko/ProductGetCampaignIncludePrdSeq.json',
+				async : false,
+				error : function(e) {
+					//console.log(e);
+				},
+				success : function(data) {
+					prdSeqArr = data.groupCampaignInclude;
+				}
+			});
+			
+			return prdSeqArr;
+		},
+		
+		//2019.01.17 조회한 prdSeq들의 제한 구매개수 조회 pmj
+		getCampaignlimitQty : function(stDate,endDate,campaignPrdList) {
+			var limitQty = 0;
+			$.ajax({
+				type : 'post',
+				data : { 'stDate' : stDate,
+						 'endDate' : endDate,
+						 'seqArr' : campaignPrdList},
+				url : '/kr/ko/ProductGetCampaignlimitQty.json',
+				async : false,
+				error : function(e) {
+					//console.log(e);
+				},
+				success : function(data) {
+					limitQty = data.limitQty;
+				}
+			});
+			
+			return limitQty;
+		},
+		
+		//2019.01.17 조회한 prdSeq의(단건, 장바구니 찜하기 용) 제한 구매개수 조회 pmj
+		getPurchaselimitOneData : function(prdSeq) {
+			var oneData = new Object();
+			$.ajax({
+				type : 'post',
+				data : { 'prdSeq' : prdSeq },
+				url : '/kr/ko/ProductGetPurchaselimitOneData.json',
+				async : false,
+				error : function(e) { 
+					//console.log(e);
+				},
+				success : function(data) {
+					oneData = data.oneData;
+				}
+			});
+			
+			return oneData;
+		},
+		
+		getPurCondPrdCnfmYn : function(prdSeq) {
+			var purCondPrdCnfmYn = "";
+			$.ajax({
+				type : 'post',
+				data : { 'prdSeq' : prdSeq },
+				url : '/kr/ko/ProductGetPurCondPrdCnfmYn.json',
+				async : false,
+				error : function(e) { 
+					//console.log(e);
+				},
+				success : function(data) {
+					purCondPrdCnfmYn = data.purCondPrdCnfmYn;
+				}
+			});
+			
+			return purCondPrdCnfmYn;
+		},
+		
+		
+		getProductGetPurChaseHistoryYn : function(prdSeq) {
+			var result = "";
+			$.ajax({
+				type : 'post',
+				data : { 'prdSeq' : prdSeq },
+				url : '/kr/ko/ProductGetPurChaseHistoryYn.json',
+				async : false,
+				error : function(e) { 
+					//console.log(e);
+				},
+				success : function(data) {
+					result = data.prdDataPurYn;
+				}
+			});
+			
+			return result;
+		},
+		
+		//2021.01.13 앱 첫 구매가능한 제품인지 조회 pmj
+		getAppFirstPurYn : function(prdSeq) {
+			var appFirstPurData;
+			$.ajax({
+				type : 'post',
+				url : '/kr/ko/ProductGetAppFirstPurYn.json',
+				async : false,
+				error : function(e) { 
+					//console.log(e);
+				},
+				success : function(data) {
+					appFirstPurData = data.appFirstPurBean.cnt+"|"+data.appFirstPurBean.ordDate;
+				}
+			});
+			return appFirstPurData;
+		},
+		//메세지 지정
+		cartMessages : {
+			"NOT_SELECT_OPTION" : "옵션이 있는 상품입니다. 옵션 선택을 위해 상세페이지로 이동 합니다.",
+			"NOT_MATCH_MULTIPUR_COND" : "복수구매 할인 제품입니다. 제품상세 페이지로 이동하셔서 장바구니 담기를 진행해 주세요.",
+			"SYSTEM_ERROR" : "서버 오류로 인해 장바구니 담기에 실패 하였습니다."
+		}	
+	}
+});
+
+})(jQuery);

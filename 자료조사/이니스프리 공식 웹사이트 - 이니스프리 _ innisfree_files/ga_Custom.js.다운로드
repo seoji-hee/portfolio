@@ -1,0 +1,660 @@
+/** 
+ * 맟춤측정기준  
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/custom-dims-mets 
+ * https://developers.google.com/tag-manager/devguide 
+ * 
+ * GA 및 GTM 코드가 삽입된 Head 영역에 작업함 
+ * 맞춤 측정기준 리스트 엑셀파일에 dimension 정의됨 
+ * Google Tag Manager dataLayer for global header
+ * 
+ */
+
+
+
+
+
+var dataLayer = dataLayer || [];
+
+var gv_GA_TrackingID = "";
+var gv_GA_GTM = "";
+
+var gv_GA_dimension01 = "";	// 고객_고유번호 : SHA512 적용
+var gv_GA_dimension02 = "";	// 고객_통합번호 : SHA512 적용
+var gv_GA_dimension03 = "";	// 고객_통합회원구분 : O / X / U
+var gv_GA_dimension04 = "";	// 고객_로그인여부 : Y / N
+var gv_GA_dimension05 = "";	// 고객_로그인 TYPE : NORMAL / AUTO / FINGERPRINT / FACEBOOK / NAVER / KAKAO / ORDER_NUMBER / OFFLINE / U
+var gv_GA_dimension06 = "";	// 고객_연령 : 26 / U
+var gv_GA_dimension07 = "";	// 고객_생년 : 1987 / U
+var gv_GA_dimension08 = "";	// 고객_성별 : M / F / U
+var gv_GA_dimension09 = "";	// 고객_등급 : 일반 / VIP / VVIP / 그린티 클럽 / U
+var gv_GA_dimension10 = "";	// 사이트명 : INNISFREE
+var gv_GA_dimension11 = "";	// 채널유형 : PC / MOBILE / APP
+var gv_GA_dimension12 = "";	// 페이지_국가 : KOR / USA / JPN / CHN
+var gv_GA_dimension13 = "";	// 페이지_언어 : KO / EN / JA / ZH
+var gv_GA_dimension14 = "";	// 페이지명 : AA.pageName 과 동일
+var gv_GA_dimension15 = "";	// 사이트 : AA.prop1 과 동일 
+var gv_GA_dimension16 = ""; // 페이지_카테고리 1 Depth : AA.prop2 와 동일
+var gv_GA_dimension17 = ""; // 페이지_카테고리 2 Depth : AA.prop3 과 동일
+var gv_GA_dimension18 = ""; // 페이지_카테고리 3 Depth : AA.prop4 와 동일
+var gv_GA_dimension19 = ""; // 페이지_카테고리 4 Depth : AA.prop5 와 동일
+var gv_GA_dimension20 = ""; // 페이지_카테고리
+var gv_GA_dimension21 = ""; // 검색_내부 검색어 : nailcare / 레드 
+var gv_GA_dimension22 = ""; // 검색_검색 결과 : O / X
+var gv_GA_dimension23 = ""; // 검색_검색 유형 : 직접 입력 / 해시태그 / 추천검색어 / 인기검색어 
+var gv_GA_dimension24 = ""; // 검색_검색 결과 수 : 2 / 23 / ..
+var gv_GA_dimension25 = ""; // 예비
+var gv_GA_dimension26 = "";	// 전자상거래 - shipping_type : Normal
+var gv_GA_dimension27 = "";	// 전자상거래 - 제품옵션코드 : sap code
+var gv_GA_dimension28 = "";	// 전자상거래 - 오프라인_주문매장코드 : X
+var gv_GA_dimension29 = "";	// 전자상거래 - 오프라인_주문매장이름 : X
+var gv_GA_dimension30 = "";	// 전자상거래 - 상품유형 : 판매상품
+var gv_GA_dimension31 = "";	// 전자상거래 - 부가상품 유형 : X
+var gv_GA_dimension32 = "";	// 전자상거래 - 제품 카테고리 코드 : AA.eVAR32 와 동일
+var gv_GA_dimension33 = "";	// 전자상거래 - 결제 수단 : 신용카드_국민 / 신용카드_외환 / 무통장입금_농협 / 무통장입금_국민 / 원클릭결제 ..
+var gv_GA_dimension34 = "";	// 전자상거래 - 프로모션 유형 : 1+1 / 2+2
+var gv_GA_dimension35 = "";	// 전자상거래 - 제품 라인 카테고리 
+var gv_GA_dimension36 = ""; // 전자상거래
+var gv_GA_dimension37 = ""; // 전자상거래
+var gv_GA_dimension38 = ""; // 버튼타입
+var gv_GA_dimension39 = ""; // 페이지_프로모션/이벤트명 : 이벤트 SEQ
+var gv_GA_dimension40 = ""; // 페이지_캠페인값 : URL 내 cmpid
+var gv_GA_dimension41 = ""; // 검색필터
+var gv_GA_dimension42 = ""; // 페이지_소셜셀러 : socialkey 값 / U 
+var gv_GA_dimension43 = ""; // 예비
+var gv_GA_dimension44 = ""; // 전자상거래 - 카카오톡 선물하기 : O / X
+var gv_GA_dimension45 = ""; // APP로그인시 PUSH고객번호 
+var gv_GA_dimension46 = ""; // 예비
+var gv_GA_dimension47 = ""; // 예비
+var gv_GA_dimension48 = ""; // 예비
+var gv_GA_dimension49 = ""; // 예비
+var gv_GA_dimension50 = ""; // 예비
+
+//추가 2019.07.18
+/*공통*/
+var AP_DATA_GCID = ""; //로그인 고객 고유번호를 암호화(SHA512) 입력. GA UserID 로 사용. 비로그인 시 공백처리 <예시 : abcd1234dfadfa>
+var AP_DATA_CID  = ""; //로그인 사용자가 뷰티포인트 통합회원 일경우 통합회원코드(UCSTMID)를 암호화(SHA512)하여 입력. 로그인 사용자가 뷰티포인트 통합회원이 아닐 경우 X 입력. 비로그인 시 공백처리 <예시 : 0101231abcde >
+var AP_DATA_ISMEMBER = ""; //로그인 사용자가 뷰티포인트 통합회원일 경우 O,로그인 사용자가 뷰티포인트 통합회원이 아닐 경우 X ,비로그인 시 공백처리 <예시 : O / X >
+var AP_DATA_ISLOGIN = ""; // 로그인: Y / 비로그인: N
+var AP_DATA_LOGINTYPE = ""; // 로그인 시 유형에 따라 예시를 참조하여 영문 대문자로 표기 < 아이디 로그인: NORMAL, 자동 로그인: AUTO, 비회원 로그인(주문조회): ORDER_NUMBER, 모바일 로그인: MOBILE, 비로그인 시 공백처리>
+var AP_DATA_CA = ""; //로그인 고객의 실 연령 표기, 비로그인 시 공백처리<예시: 26>
+var AP_DATA_CD = ""; //실제 생년 입력, 비로그인 시 공백처리 <예시: 1987>
+var AP_DATA_CG = ""; //남성: M / 여성: F, 비로그인 시 공백처리
+var AP_DATA_CT = ""; //7월 새등급(프라임), 18년까지 유효 (VIP), 비로그인 시 공백처리 <예시 : 일반 / 스마트 클럽 / 스마트 클럽 프라임 / VIP>
+var AP_DATA_SITENAME = ""; //사이트명 영문 대문자 표기  <예시 : ARITAUM>
+var AP_DATA_CHANNEL = ""; //아래 규칙을 참조하여 영문 대문자로 표기 <예시: PC / MOBILE / APP>
+//APP: APP일 경우 APP 처리(Web 처리 불필요)
+//MOBILE: userAgent에 다음과 같은 키워드가 있을 경우 MOBILE 처리 → 'iPhone', 'iPod', 'iPad', 'BlackBerry', 'Android', 'Windows CE', 'LG', 'MOT', 'SAMSUNG', 'SonyEricsson
+//PC: 위 경우가 아닐 경우 PC 처리
+var AP_DATA_PAGENAME = ""; //페이지 타이틀명 입력 <예시: 페이지 타이틀명 입력>
+var AP_DATA_PAGETYPE = ""; //① 메인페이지 : main ② 제품리스트 : prds ③ 제품상세 : prd ④ 이벤트리스트 : events ⑤ 이벤트상세 : event ⑥ 검색결과페이지 : search ,나머지는 공백
+var AP_DATA_BREAD = ""; //현재 페이지의 Breadcrumb Trail값에 대해서 입력 <예시 : 홈 > 메이크업 > 치크 > 블러셔 >
+var AP_DATA_PUSHID = ""; //PUSH고객번호
+
+/*제품상세*/
+var AP_PRD_NAME = ""; //제품명  <예시 : 설화수 파우더 포 쿠션>
+var AP_PRD_CODE = ""; //제품온라인코드  <예시 : 111170000193>
+var AP_PRD_SAPCODE = ""; //제품SAP코드   <예시 : 01321321 >
+var AP_PRD_PRDPRICE; //제품가격 ( 할인 X ) <예시 : 92000>
+var AP_PRD_PRICE; //제품할인가격 ( 할인 O ) <예시 : 65000>
+var AP_PRD_BRAND = ""; //제품브랜드 	<예시 : 설화수>
+var AP_PRD_CATEGORY = ""; //제품 카테고리  <예시 : 파우더>
+/*검색*/
+var AP_SEARCH_TERM = ""; //검색키워드  <예시 : 에센스>
+var AP_SEARCH_PRDRESULT = new Array(); //JSON Array . 첫페이지에 나오는 제품들만 포함시킴. 
+/*var AP_SEARCH_PRDRESULT = [ 
+    {
+        "name":"극진 에센스",
+        "brand":"한율",
+        "code":"20526",
+        "sapcode": "030526",
+        "prdprice": 1700000,
+        "price" : 1450000
+    },{
+        "name": "에센스 바디워시",
+        "brand":"해피바스",
+        "code":"12311",
+        "sapcode":"0871",
+        "prdprice": 13600,
+        "price" : 11600
+    },
+    ...
+];*/
+var AP_SEARCH_NUM; //상품조회 결과수 _ 첫 화면에 노출된 결과가 아닌, 페이징 처리된 총 상품의 수
+var AP_SEARCH_TYPE = ""; //"직접입력", "해시태그", "추천검색어", "최근검색어" 등 검색메뉴유형 or 사용자의 검색행동에 따름
+
+/*리뷰*/
+var AP_REVIEW_RATING; // 별점수 <예시 : 4.8>
+var AP_REVIEW_PICTURE; // 등록된 이미지수 <예시 : 3>
+var AP_REVIEW_PRD = ""; //리뷰 제품명 <예시 : 아이스드 타임 오일앰프>
+var AP_REVIEW_PRDCODE = ""; //리뷰 제품온라인코드 <예시 : 321311>
+var AP_REVIEW_SAPCODE = ""; //리뷰 제품SAP코드 <예시 : 0321311>
+var AP_REVIEW_CONTENT = ""; //review 내용 <예시 : 좋아요. 후기 쓰는걸 깜빡 했네요 ㅎ ㅎ>
+
+/*회원가입*/
+var AP_JOIN_NAME = ""; // 약관 동의하고 진행 버튼 클릭  <예시 : 동의하고 진행>  , 가입완료 버튼 클릭 <예시 : 가입완료> 
+
+/*프로모션(이벤트)*/
+var AP_PROMO_NAME = ""; //프로모션 이름 <예시 : [통합 캠페인] Product 101 체험샘플 골라갖기>
+var AP_PROMO_ID = ""; //프로모션 아이디 <예시 : 1817>
+var AP_PROMO_TYPE = ""; //프로모션 종류 <예시 : 샘플증정>
+
+/*장바구니*/
+var AP_CART_PRICE=0; //총 장바구니금액 <예시 : 41200>
+var AP_CART_PRDPRICE; //총 상품액  <예시 : 44000>
+var AP_CART_DISCOUNT; //총 할인금액 <예시 : 2800>
+var AP_CART_PRDS = new Array(); //상품정보
+var AP_CART_ADDPRDS = new Array();
+/*var AP_CART_PRDS = [
+	{
+	    "name": "위클리 아이팔레트",
+	    "code": "205261",
+	    "sapcode": "005261",
+	    "brand": "아리따움",
+	    "price": 16000,
+	    "prdprice": 18000,
+	    "quantity": 1,
+	    "variant": "3호 수요일",
+	    "promotion": "",
+	    "cate": "아이팔레트",
+	    "catecode": "2132"
+	}, {
+	    "name": "크림 스킨",
+	    "code": "213121",
+	    "sapcode": "007261",
+	    "brand": "라네즈",
+	    "price": 25200,
+	    "prdprice": 32000,
+	    "quantity": 1,
+	    "variant": "",
+	    "promotion": "1+1",
+	    "cate": "스킨/토너",
+	    "catecode": "3212"
+	}
+	];*/
+/*주문결재*/
+var AP_ORDER_PRICE; //총 결제금액 41200
+var AP_ORDER_PRDPRICE; //총 상품금액 44000
+var AP_ORDER_DISCOUNT; //총 할인금액 2800
+var AP_ORDER_PRDS = new Array(); //상품정보
+/*var AP_ORDER_PRDS = [
+    {
+        "name": "위클리 아이팔레트",
+        "code": "205261",
+        "sapcode": "005261",
+        "brand": "아리따움",
+        "price": 16000,
+        "prdprice": 18000,
+        "quantity": 1,
+        "variant": "3호 수요일",
+        "promotion": "",
+        "cate": "아이팔레트",
+        "catecode": "2132"
+    }, {
+        "name": "크림 스킨",
+        "code": "213121",
+        "sapcode": "007261",
+        "brand": "라네즈",
+        "price": 25200,
+        "prdprice": 32000,
+        "quantity": 1,
+        "variant": "",
+        "promotion": "1+1",
+        "cate": "스킨/토너",
+        "catecode": "3212"
+    }
+];*/
+
+/*주문완료*/
+var AP_PURCHASE_PRICE; // 총결재금액 var AP_PURCHASE_PRICE = 41200;
+var AP_PURCHASE_PRDPRICE; // 총 상품금액 var AP_PURCHASE_PRDPRICE = 44000;
+var AP_PURCHASE_DCTOTAL; // 총 할인금액 var AP_PURCHASE_DCTOTAL = 2800;
+var AP_PURCHASE_DCBASIC; // 기본할인  var AP_PURCHASE_DCBASIC = 201901222246818;
+var AP_PURCHASE_COUPON; //쿠폰할인금 var AP_PURCHASE_COUPON = 11000;
+var AP_PURCHASE_MEMBERSHIP; //멤버십할인금 var AP_PURCHASE_MEMBERSHIP = 1100;
+var AP_PURCHASE_GIFTCARD; //기본할인 var AP_PURCHASE_GIFTCARD = 1500;
+var AP_PURCHASE_POINT; //뷰티포인트사용금액 var AP_PURCHASE_POINT = 2800;
+var AP_PURCHASE_ONLINEGIFT;  //온라인 상품권사용금액 var AP_PURCHASE_ONLINEGIFT = 1500;
+var AP_PURCHASE_ORDERNUM; //주문번호 var AP_PURCHASE_ORDERNUM = 201901222246818;
+var AP_PURCHASE_BEAUTYACC; //뷰티포인트적립금 var AP_PURCHASE_BEAUTYACC = 2000;
+var AP_PURCHASE_SHIPPING; //배송비 var AP_PURCHASE_SHIPPING = 1500;
+var AP_PURCHASE_PRDS = new Array(); //상품정보
+/*var AP_PURCHASE_PRDS = [
+    {
+        "name": "위클리 아이팔레트",
+        "code": "205261",
+        "sapcode": "005261",
+        "brand": "아리따움",
+        "price": 16000,
+        "prdprice": 18000,
+        "quantity": 1,
+        "variant": "3호 수요일",
+        "promotion": "",
+        "cate": "아이팔레트",
+        "catecode": "2132"
+    }, {
+        "name": "크림 스킨",
+        "code": "213121",
+        "sapcode": "007261",
+        "brand": "라네즈",
+        "price": 25200,
+        "prdprice": 32000,
+        "quantity": 1,
+        "variant": "",
+        "promotion": "1+1",
+        "cate": "스킨/토너",
+        "catecode": "3212"
+    }
+];*/
+var AP_ORDER_TYPE = "";  //결재수단 (선택)
+var AP_ORDER_TYPEDETAIL  = "";  //카드사
+var AP_PURCHASE_TYPE = "";  //결재수단  (최종) 
+/*주문취소*/
+var AP_REFUND_PRICE; // 최종결재금액  var AP_REFUND_PRICE = 41200;
+var AP_REFUND_ORDERNUM; //총 상품금액 var AP_REFUND_ORDERNUM = 44000;
+var AP_REFUND_CONTENT; //var AP_REFUND_CONTENT = "단순변심";
+var AP_REFUND_PRDS = new Array();
+/*var AP_REFUND_PRDS = [
+    {
+        "name": "위클리 아이팔레트",
+        "code": "205261",
+        "sapcode": "005261",
+        "brand": "아리따움",
+        "price": 16000,
+        "prdprice": 18000,
+        "quantity": 1,
+        "variant": "3호 수요일",
+        "promotion": "",
+        "cate": "아이팔레트",
+        "catecode": "2132"
+    }, {
+        "name": "크림 스킨",
+        "code": "213121",
+        "sapcode": "007261",
+        "brand": "라네즈",
+        "price": 25200,
+        "prdprice": 32000,
+        "quantity": 1,
+        "variant": "",
+        "promotion": "1+1",
+        "cate": "스킨/토너",
+        "catecode": "3212"
+    }
+];*/
+
+//
+
+
+gv_GA_TrackingID = "UA-110770460-12";	// 개발 : UA-110770460-12, 	운영 : UA-110770460-3
+gv_GA_GTM = "GTM-T5L3ZTM";				// 개발 : GTM-T5L3ZTM,		운영 : GTM-K8SNBK9
+
+var gv_GA_dataLayer;
+
+function makeScriptGA_Custom_init()
+{
+	gv_GA_dimension01 = "";	gv_GA_dimension02 = "";	gv_GA_dimension03 = "";	gv_GA_dimension04 = "";	gv_GA_dimension05 = "";
+	gv_GA_dimension06 = "";	gv_GA_dimension07 = "";	gv_GA_dimension08 = "";	gv_GA_dimension09 = "";	gv_GA_dimension10 = "";
+	gv_GA_dimension11 = "";	gv_GA_dimension12 = "";	gv_GA_dimension13 = "";	gv_GA_dimension14 = "";	gv_GA_dimension15 = "";
+	gv_GA_dimension16 = "";	gv_GA_dimension17 = "";	gv_GA_dimension18 = "";	gv_GA_dimension19 = "";	gv_GA_dimension20 = "";
+	gv_GA_dimension21 = "";	gv_GA_dimension22 = "";	gv_GA_dimension23 = "";	gv_GA_dimension24 = "";	gv_GA_dimension25 = "";
+	gv_GA_dimension26 = "";	gv_GA_dimension27 = "";	gv_GA_dimension28 = "";	gv_GA_dimension29 = "";	gv_GA_dimension30 = "";
+	gv_GA_dimension31 = "";	gv_GA_dimension32 = "";	gv_GA_dimension33 = "";	gv_GA_dimension34 = "";	gv_GA_dimension35 = "";
+	gv_GA_dimension36 = "";	gv_GA_dimension37 = "";	gv_GA_dimension38 = "";	gv_GA_dimension39 = "";	gv_GA_dimension40 = "";
+	gv_GA_dimension41 = "";	gv_GA_dimension42 = "";	gv_GA_dimension43 = "";	gv_GA_dimension44 = "";	gv_GA_dimension45 = "";
+	gv_GA_dimension46 = "";	gv_GA_dimension47 = "";	gv_GA_dimension48 = "";	gv_GA_dimension49 = "";	gv_GA_dimension50 = "";
+
+	
+	gv_GA_dimension10 = "INNISFREE";
+	gv_GA_dimension12 = "KOR";
+	gv_GA_dimension13 = "KO";
+	gv_GA_dimension26 = "Normal";
+	
+}
+
+function makeScriptGA_Custom()
+{
+//custom dimension setting
+	
+	gv_GA_dataLayer = [{
+ 	   'dimension1': gv_GA_dimension01,		'dimension2': gv_GA_dimension02,	'dimension3': gv_GA_dimension03,	'dimension4': gv_GA_dimension04,	'dimension5': gv_GA_dimension05,	
+	   'dimension6': gv_GA_dimension06,		'dimension7': gv_GA_dimension07,	'dimension8': gv_GA_dimension08,	'dimension9': gv_GA_dimension09,	'dimension10': gv_GA_dimension10,	
+	   'dimension11': gv_GA_dimension11,	'dimension12': gv_GA_dimension12,	'dimension13': gv_GA_dimension13,	'dimension14': gv_GA_dimension14,	'dimension15': gv_GA_dimension15,	
+	   'dimension16': gv_GA_dimension16,	'dimension17': gv_GA_dimension17,	'dimension18': gv_GA_dimension18,	'dimension19': gv_GA_dimension19,	'dimension20': gv_GA_dimension20,		   
+	   'dimension21': gv_GA_dimension21,	'dimension22': gv_GA_dimension22,	'dimension23': gv_GA_dimension23,	'dimension24': gv_GA_dimension24,	'dimension25': gv_GA_dimension25,
+	   'dimension26': gv_GA_dimension26,	'dimension27': gv_GA_dimension27,	'dimension28': gv_GA_dimension28,	'dimension29': gv_GA_dimension29,	'dimension30': gv_GA_dimension30,		   
+	   'dimension31': gv_GA_dimension31,	'dimension32': gv_GA_dimension32,	'dimension33': gv_GA_dimension33,	'dimension34': gv_GA_dimension34,	'dimension35': gv_GA_dimension35,    	   
+	   'dimension36': gv_GA_dimension36,	'dimension37': gv_GA_dimension37,	'dimension38': gv_GA_dimension38,	'dimension39': gv_GA_dimension39,	'dimension40': gv_GA_dimension40,		   
+	   'dimension41': gv_GA_dimension41,	'dimension42': gv_GA_dimension42,	'dimension43': gv_GA_dimension43,	'dimension44': gv_GA_dimension44,	'dimension45': gv_GA_dimension45, 
+	   'dimension46': gv_GA_dimension46,	'dimension47': gv_GA_dimension47,	'dimension48': gv_GA_dimension48,	'dimension49': gv_GA_dimension49,	'dimension50': gv_GA_dimension50    	   
+	  }];
+    //console.log("  dataLayer>>  " + JSON.stringify(gv_GA_dataLayer));
+    var browserInfo = navigator.userAgent;
+
+    if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	//makeScriptGA_SendApp_E();
+    	//makeScriptGA_SendApp_P();
+//    	if ( browserInfo.indexOf("AP_Android") > -1  ) {
+//    		console.log("==================================AP_Android=========================================================");
+//    		makeScriptGA_SendApp_P();
+//    	}
+    	
+    }
+    else {
+
+    	makeScriptGA_Analytics();
+
+		ga('set','userId', gv_GA_dimension01);		
+		ga('set','dimension1', gv_GA_dimension01);	ga('set','dimension2', gv_GA_dimension02);	ga('set','dimension3', gv_GA_dimension03);	ga('set','dimension4', gv_GA_dimension04);	ga('set','dimension5', gv_GA_dimension05);		
+		ga('set','dimension6', gv_GA_dimension06);	ga('set','dimension7', gv_GA_dimension07);	ga('set','dimension8', gv_GA_dimension08);	ga('set','dimension9', gv_GA_dimension09);	ga('set','dimension10', gv_GA_dimension10);		
+		ga('set','dimension11', gv_GA_dimension11);	ga('set','dimension12', gv_GA_dimension12);	ga('set','dimension13', gv_GA_dimension13);	ga('set','dimension14', gv_GA_dimension14);	ga('set','dimension15', gv_GA_dimension15);		
+		ga('set','dimension16', gv_GA_dimension16);	ga('set','dimension17', gv_GA_dimension17);	ga('set','dimension18', gv_GA_dimension18);	ga('set','dimension19', gv_GA_dimension19);	ga('set','dimension20', gv_GA_dimension20);		
+		ga('set','dimension21', gv_GA_dimension21);	ga('set','dimension22', gv_GA_dimension22);	ga('set','dimension23', gv_GA_dimension23);	ga('set','dimension24', gv_GA_dimension24);	ga('set','dimension25', gv_GA_dimension25);	
+		ga('set','dimension26', gv_GA_dimension26);	ga('set','dimension27', gv_GA_dimension27);	ga('set','dimension28', gv_GA_dimension28);	ga('set','dimension29', gv_GA_dimension29);	ga('set','dimension30', gv_GA_dimension30);		
+		ga('set','dimension31', gv_GA_dimension31);	ga('set','dimension32', gv_GA_dimension32);	ga('set','dimension33', gv_GA_dimension33);	ga('set','dimension34', gv_GA_dimension34);	ga('set','dimension35', gv_GA_dimension35);	
+		ga('set','dimension36', gv_GA_dimension36);	ga('set','dimension37', gv_GA_dimension37);	ga('set','dimension38', gv_GA_dimension38);	ga('set','dimension39', gv_GA_dimension39);	ga('set','dimension40', gv_GA_dimension40);		
+		ga('set','dimension41', gv_GA_dimension41);	ga('set','dimension42', gv_GA_dimension42);	ga('set','dimension43', gv_GA_dimension43);	ga('set','dimension44', gv_GA_dimension44);	ga('set','dimension45', gv_GA_dimension45);	
+		ga('set','dimension46', gv_GA_dimension46);	ga('set','dimension47', gv_GA_dimension47);	ga('set','dimension48', gv_GA_dimension48);	ga('set','dimension49', gv_GA_dimension49);	ga('set','dimension50', gv_GA_dimension50);		
+		        
+		makeScriptGA_TagManager();
+	
+    }    
+}
+
+function makeScriptGA_Analytics()
+{
+	var browserInfo = navigator.userAgent;
+    if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    }
+    else {
+		 //Google Analytics
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+			ga('create', gv_GA_TrackingID, 'auto');
+			
+    }
+}
+
+function makeScriptGA_TagManager()
+{
+	var browserInfo = navigator.userAgent;
+    if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+    	// window.onload 시 호출 
+    }
+    else {
+		//Google Tag Manager
+		(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+		'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','gv_GA_dataLayer',gv_GA_GTM);
+	
+		        window.onload = function () {
+		              var str = "<noscript><iframe src='https://www.googletagmanager.com/ns.html?id="+gv_GA_GTM+" height='0' width='0' style='display:none;visibility:hidden'></iframe></noscript>";
+	
+		              $("body").prepend(str);
+		        }
+    }
+}
+
+function makeScriptGA_SendApp_P()
+{
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		//var json_data = gv_GA_dataLayer;
+		
+		var json_data = 
+		{
+			'type' : 'P',
+			'userId': gv_GA_dimension01,
+	 	   	'dimension1': gv_GA_dimension01,	'dimension2': gv_GA_dimension02,	'dimension3': gv_GA_dimension03,	'dimension4': gv_GA_dimension04,	'dimension5': gv_GA_dimension05,	
+	 	   	'dimension6': gv_GA_dimension06,	'dimension7': gv_GA_dimension07,	'dimension8': gv_GA_dimension08,	'dimension9': gv_GA_dimension09,	'dimension10': gv_GA_dimension10,	
+	 	   	'dimension11': gv_GA_dimension11,	'dimension12': gv_GA_dimension12,	'dimension13': gv_GA_dimension13,	'dimension14': gv_GA_dimension14,	'dimension15': gv_GA_dimension15,	
+	 	   	'dimension16': gv_GA_dimension16,	'dimension17': gv_GA_dimension17,	'dimension18': gv_GA_dimension18,	'dimension19': gv_GA_dimension19,	'dimension20': gv_GA_dimension20,		   
+	 	   	'dimension21': gv_GA_dimension21,	'dimension22': gv_GA_dimension22,	'dimension23': gv_GA_dimension23,	'dimension24': gv_GA_dimension24,	'dimension25': gv_GA_dimension25,
+	 	   	'dimension26': gv_GA_dimension26,	'dimension27': gv_GA_dimension27,	'dimension28': gv_GA_dimension28,	'dimension29': gv_GA_dimension29,	'dimension30': gv_GA_dimension30,		   
+	 	   	'dimension31': gv_GA_dimension31,	'dimension32': gv_GA_dimension32,	'dimension33': gv_GA_dimension33,	'dimension34': gv_GA_dimension34,	'dimension35': gv_GA_dimension35,    	   
+	 	   	'dimension36': gv_GA_dimension36,	'dimension37': gv_GA_dimension37,	'dimension38': gv_GA_dimension38,	'dimension39': gv_GA_dimension39,	'dimension40': gv_GA_dimension40,		   
+	 	   	'dimension41': gv_GA_dimension41,	'dimension42': gv_GA_dimension42,	'dimension43': gv_GA_dimension43,	'dimension44': gv_GA_dimension44,	'dimension45': gv_GA_dimension45, 
+	 	   	'dimension46': gv_GA_dimension46,	'dimension47': gv_GA_dimension47,	'dimension48': gv_GA_dimension48,	'dimension49': gv_GA_dimension49,	'dimension50': gv_GA_dimension50
+	 	   	
+		    /*   add by hgham 2018-05-08 remove
+	 	   	'event' : {
+	 	   		'category': gv_GA_Category,
+	 	   		'action': gv_GA_Action,
+	 	   		'label': gv_GA_Label
+	 	   	}
+	 	   	*/
+		  };
+	
+	    //console.log("  makeScriptGA_SendApp_P >>  " + JSON.stringify(json_data));
+	    
+	    try {
+		    //window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+	    	//console.log("  makeScriptGA_SendApp_P try >>  " + JSON.stringify(json_data));
+	    	
+			if(browserInfo.indexOf("AP_Android") > -1) {
+				//makeScriptGA_Custom();
+				
+				//console.log("  makeScriptGA_SendApp_P try  AP_Android>>  " + JSON.stringify(json_data));
+				try{
+				window.inniApp.GA_Tagging(JSON.stringify(json_data));
+				}catch(e){}
+			}
+			else if(browserInfo.indexOf("AP_iOS") > -1) {		
+				//console.log("  makeScriptGA_SendApp_P try  AP_iOS>>  " + JSON.stringify(json_data));
+				//window.location = "GA_Tagging://" + JSON.stringify(json_data);		
+				try{
+					window.inniApp.GA_Tagging(JSON.stringify(json_data));
+					}catch(e){}	
+			}
+		
+	    } catch (e){
+	    	//window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+	    	//console.log("  makeScriptGA_SendApp_P catch >>  " + JSON.stringify(json_data));
+	    	makeScriptGA_SendApp_P();
+	    }
+	}
+			
+	//alert('makeScriptGA_SendApp_P');
+}
+
+function makeScriptGA_SendApp_E()
+{
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		var json_data = 
+			{
+				'type' : 'E',
+				'userId': gv_GA_dimension01,
+		 	   	'dimension1': gv_GA_dimension01,	'dimension2': gv_GA_dimension02,	'dimension3': gv_GA_dimension03,	'dimension4': gv_GA_dimension04,	'dimension5': gv_GA_dimension05,	
+		 	   	'dimension6': gv_GA_dimension06,	'dimension7': gv_GA_dimension07,	'dimension8': gv_GA_dimension08,	'dimension9': gv_GA_dimension09,	'dimension10': gv_GA_dimension10,	
+		 	   	'dimension11': gv_GA_dimension11,	'dimension12': gv_GA_dimension12,	'dimension13': gv_GA_dimension13,	'dimension14': gv_GA_dimension14,	'dimension15': gv_GA_dimension15,	
+		 	   	'dimension16': gv_GA_dimension16,	'dimension17': gv_GA_dimension17,	'dimension18': gv_GA_dimension18,	'dimension19': gv_GA_dimension19,	'dimension20': gv_GA_dimension20,		   
+		 	   	'dimension21': gv_GA_dimension21,	'dimension22': gv_GA_dimension22,	'dimension23': gv_GA_dimension23,	'dimension24': gv_GA_dimension24,	'dimension25': gv_GA_dimension25,
+		 	   	'dimension26': gv_GA_dimension26,	'dimension27': gv_GA_dimension27,	'dimension28': gv_GA_dimension28,	'dimension29': gv_GA_dimension29,	'dimension30': gv_GA_dimension30,		   
+		 	   	'dimension31': gv_GA_dimension31,	'dimension32': gv_GA_dimension32,	'dimension33': gv_GA_dimension33,	'dimension34': gv_GA_dimension34,	'dimension35': gv_GA_dimension35,    	   
+		 	   	'dimension36': gv_GA_dimension36,	'dimension37': gv_GA_dimension37,	'dimension38': gv_GA_dimension38,	'dimension39': gv_GA_dimension39,	'dimension40': gv_GA_dimension40,		   
+		 	   	'dimension41': gv_GA_dimension41,	'dimension42': gv_GA_dimension42,	'dimension43': gv_GA_dimension43,	'dimension44': gv_GA_dimension44,	'dimension45': gv_GA_dimension45, 
+		 	   	'dimension46': gv_GA_dimension46,	'dimension47': gv_GA_dimension47,	'dimension48': gv_GA_dimension48,	'dimension49': gv_GA_dimension49,	'dimension50': gv_GA_dimension50,
+			   
+		 	   	//'event' : {  add by hg 2018-05-08 
+	 	   		'category': gv_GA_Category,
+	 	   		'action': gv_GA_Action,
+	 	   		'label': gv_GA_Label
+		 	   	//}
+			  };
+		
+		//alert( JSON.stringify(json_data))
+		if(browserInfo.indexOf("AP_Android") > -1) {
+			try{
+				window.inniApp.GA_Tagging(JSON.stringify(json_data));
+				}catch(e){}
+		}
+		else if(browserInfo.indexOf("AP_iOS") > -1) {		
+			try{
+				window.inniApp.GA_Tagging(JSON.stringify(json_data));
+				}catch(e){}
+		}
+	}
+	//alert('makeScriptGA_SendApp_E');		
+}
+function makeCommonTag(apDataPagetype, apDataBread){
+	AP_DATA_GCID = gv_GA_dimension01;
+	AP_DATA_CID  = gv_GA_dimension02;
+	AP_DATA_ISMEMBER = gv_GA_dimension03;
+	AP_DATA_ISLOGIN = gv_GA_dimension04;
+	AP_DATA_LOGINTYPE = gv_GA_dimension05;
+	AP_DATA_CA = gv_GA_dimension06;
+	AP_DATA_CD = gv_GA_dimension07;
+	AP_DATA_CG = gv_GA_dimension08;
+	AP_DATA_CT = gv_GA_dimension09;
+	AP_DATA_SITENAME = gv_GA_dimension10;
+	AP_DATA_CHANNEL = gv_GA_dimension11;	
+	AP_DATA_PAGENAME = document.title; 
+	AP_DATA_PAGETYPE = apDataPagetype;
+	AP_DATA_BREAD = apDataBread;	
+	AP_DATA_PUSHID = gv_GA_dimension45; 
+	
+}
+function makeProductViewTag(prd_name, prd_code, prd_sapcode, prd_stdprice, prd_price, prd_brand, prd_category){
+	AP_PRD_NAME = prd_name;
+	AP_PRD_CODE = prd_code;
+	AP_PRD_SAPCODE = prd_sapcode;
+	AP_PRD_PRDPRICE = Math.floor(prd_stdprice);
+	AP_PRD_PRICE = Math.floor(prd_price);
+	AP_PRD_BRAND = "INNISFREE";
+	AP_PRD_CATEGORY = prd_category;
+	
+	dataLayer.push({event: "product"});
+}
+
+
+function makeJoinAgreeTag(){
+	AP_JOIN_NAME = "동의하고 진행";
+	dataLayer.push({'event': 'join'});
+	
+}
+
+function makeJoinCompleteTag(){
+	dataLayer.push({event: "register"});
+}
+
+function makeJoinFinishTag(){
+	AP_JOIN_NAME = "가입완료";
+	dataLayer.push({event: 'join'});
+}
+
+function makeLoginSuccessTag(){
+	dataLayer.push({event: "login"});
+}
+function makeReviewTag(rating, picture, prdNm, prdSeq, prdSapCode, content){
+	AP_REVIEW_RATING = rating;
+	AP_REVIEW_PICTURE = picture; // 등록된 이미지수 <예시 : 3>
+	AP_REVIEW_PRD = prdNm; //리뷰 제품명 <예시 : 아이스드 타임 오일앰프>
+	AP_REVIEW_PRDCODE = prdSeq; //리뷰 제품온라인코드 <예시 : 321311>
+	AP_REVIEW_SAPCODE = prdSapCode; //리뷰 제품SAP코드 <예시 : 0321311>
+	AP_REVIEW_CONTENT = content; //review 내용 <예시 : 좋아요. 후기 쓰는걸 깜빡 했네요 ㅎ ㅎ>
+	
+	dataLayer.push({event: "review"});
+}
+
+function makeEventTag(){
+	dataLayer.push({event: "promotion_detail"});
+}
+
+function makeCartLoadTag(){	
+	dataLayer.push({event: 'cart'});
+}
+
+function makeCartTag(arr){
+	AP_CART_ADDPRDS  = arr;	
+	dataLayer.push({event: 'addcart'});
+}
+function makeCartTagAll(arr){
+	AP_CART_ADDPRDS = [];
+	if(arr != null){
+		for(var i=0; i<arr.length; i++){
+			var cartObj = new Object();
+			cartObj.name = arr[i].name;
+			cartObj.code = arr[i].id;
+			cartObj.sapcode = arr[i].dimension27;
+			cartObj.brand = "INNISFREE";
+			cartObj.price = arr[i].price;
+			cartObj.prdprice = "";
+			cartObj.quantity = arr[i].quantity;
+			cartObj.variant = arr[i].variant=="옵션없음"?"":arr[i].variant;
+			cartObj.promotion = arr[i].dimension34;
+			cartObj.cate = arr[i].dimension35;
+			cartObj.catecode = arr[i].dimension32;			
+			
+			AP_CART_ADDPRDS.push(cartObj);
+		}
+	}
+	
+	dataLayer.push({event: 'addcart'});
+}
+function makeOrderTag(){
+	dataLayer.push({event: 'purchaseprdbtn'});
+}
+function makeCartOrderTag(){
+	dataLayer.push({event: 'purchasecartbtn'});
+}
+function makeOrderPageTag(){
+	dataLayer.push({event: 'orderbtn'});
+}
+function makeOrderDetailTag(){	
+	dataLayer.push({event: 'order'});
+}
+function makeOrderCompleteTag(){
+	dataLayer.push({event: 'purchase'});
+}
+
+//통합검색 태깅구현
+function wnSearchTag(searchTerm, searchPrdresult, searchNum, searchType){
+    AP_SEARCH_TERM = searchTerm; //검색키워드  <예시 : 에센스>
+    AP_SEARCH_PRDRESULT = searchPrdresult; //JSON Array . 첫페이지에 나오는 제품들만 포함시킴.
+    AP_SEARCH_NUM = searchNum; //상품조회 결과수 _ 첫 화면에 노출된 결과가 아닌, 페이징 처리된 총 상품의 수
+    AP_SEARCH_TYPE = searchType; //"직접입력", "해시태그", "추천검색어", "최근검색어" 등 검색메뉴유형 or 사용자의 검색행동에 따름
+    
+//    console.log(AP_SEARCH_TERM);
+//    console.log(AP_SEARCH_PRDRESULT);
+//    console.log(AP_SEARCH_NUM);
+//    console.log(AP_SEARCH_TYPE);
+    dataLayer.push({event: "search"});
+    
+}
+
+
+
+//주문취소 태깅구현
+function wnPurchaseTag(price, orderNum, content, prds){
+    AP_REFUND_PRICE = price; // 최종결재금액  var AP_REFUND_PRICE = 41200;
+    AP_REFUND_ORDERNUM = orderNum; //주문번호
+    AP_REFUND_CONTENT = content; //취소사유
+    AP_REFUND_PRDS = prds;
+    
+    console.log(AP_REFUND_PRICE);
+    console.log(AP_REFUND_ORDERNUM);
+    console.log(AP_REFUND_CONTENT);
+    console.log(AP_REFUND_PRDS);
+    dataLayer.push({event: "refund"});
+    
+}
+
+
+//window.onload = function() {
+//	
+//	var browserInfo = navigator.userAgent;
+//
+//	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+//		//gv_GA_dataLayer.push({'type' : 'P'});
+//		makeScriptGA_SendApp_P();
+//	}
+//}
+
+

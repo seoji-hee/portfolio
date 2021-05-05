@@ -1,0 +1,155 @@
+/* ========== [제품상세] ========== */
+_Device={};_Device.smartphone=false;_Device.tablet=false;_Device.type=0;_Device.os=0;function checkDevice(){if(navigator.userAgent.match(/Android/)!=null){if(navigator.userAgent.match(/mobile|Mobile/)!=null){_Device.type=2}else{_Device.type=1}_Device.os=0}else{var minSiteWidth=480;var maxSiteWidth=1024;var w=($(window).width()<window.screen.width)?$(window).width():window.screen.width;if(navigator.userAgent.match(/iPhone|iPad|iPod/)!=null){_Device.os=1}else{_Device.os=2}if(navigator.userAgent.match(/webOS|iPhone|iPad|iPod|BlackBerry/)!=null){if(w<=minSiteWidth||(navigator.userAgent.match(/iPhone|iPod|BlackBerry/)!=null&&navigator.platform.match(/iPad/)==null)){_Device.type=2}else{_Device.type=1}}else{_Device.type=0}}if(_Device.type==2){_Device.tablet=false;_Device.smartphone=true}else if(_Device.type==1){_Device.tablet=true;_Device.smartphone=false}else{_Device.smartphone=_Device.tablet=false}}_Browser={};function browserDetect(){_Browser.ie6=false;_Browser.ie7=false;_Browser.ie8=false;_Browser.ie9=false;_Browser.ie10=false;_Browser.ie11_over=false;_Browser.msie=false;_Browser.mozilla=false;_Browser.safari=false;_Browser.chrome=false;_Browser.version=0;_Browser.name="etc";var objappVersion=navigator.appVersion;var objAgent=navigator.userAgent;var objbrowserName=navigator.appName;var objfullVersion=''+parseFloat(navigator.appVersion);var objBrMajorVersion=parseInt(navigator.appVersion,10);var objOffsetName,objOffsetVersion,ix;var iev=0;var ieold=(/MSIE (\d+\.\d+);/.test(navigator.userAgent));var trident=!!navigator.userAgent.match(/Trident\/7.0/);var rv=navigator.userAgent.indexOf("rv:11.0");if(ieold)iev=new Number(RegExp.$1);if(navigator.appVersion.indexOf("MSIE 10")!=-1)iev=10;if(trident&&rv!=-1)iev=11;if(iev!=0||(objOffsetVersion=objAgent.indexOf("MSIE"))!=-1){_Browser.name="Microsoft Internet Explorer";_Browser.msie=true;_Browser.version=iev;if(_Browser.version<7){_Browser.ie6=true}else if(_Browser.version<8){_Browser.ie7=true}else if(_Browser.version<9){_Browser.ie8=true}else if(_Browser.version<10){_Browser.ie9=true}else if(_Browser.version<11){_Browser.ie10=true}else{_Browser.ie11_over=true}}else{if((objOffsetVersion=objAgent.indexOf("Chrome"))!=-1){_Browser.chrome=true;objbrowserName="Chrome";objfullVersion=objAgent.substring(objOffsetVersion+7)}else if((objOffsetVersion=objAgent.indexOf("Firefox"))!=-1){_Browser.mozilla=true;objbrowserName="Firefox"}else if((objOffsetVersion=objAgent.indexOf("Safari"))!=-1){_Browser.safari=true;objbrowserName="Safari";objfullVersion=objAgent.substring(objOffsetVersion+7);if((objOffsetVersion=objAgent.indexOf("Version"))!=-1)objfullVersion=objAgent.substring(objOffsetVersion+8)}else if((objOffsetName=objAgent.lastIndexOf(' ')+1)<(objOffsetVersion=objAgent.lastIndexOf('/'))){objbrowserName=objAgent.substring(objOffsetName,objOffsetVersion);objfullVersion=objAgent.substring(objOffsetVersion+1);if(objbrowserName.toLowerCase()==objbrowserName.toUpperCase()){objbrowserName=navigator.appName}}if((ix=objfullVersion.indexOf(";"))!=-1)objfullVersion=objfullVersion.substring(0,ix);if((ix=objfullVersion.indexOf(" "))!=-1)objfullVersion=objfullVersion.substring(0,ix);objBrMajorVersion=parseInt(''+objfullVersion,10);if(isNaN(objBrMajorVersion)){objfullVersion=''+parseFloat(navigator.appVersion);objBrMajorVersion=parseInt(navigator.appVersion,10)}_Browser.name=objbrowserName;_Browser.version=objBrMajorVersion}}checkDevice();browserDetect();
+$(document).ready(function(){
+	/* GIF BUTTON */
+	$(".prdGifBtn").on("click",function(){
+		$(this).parents(".prdGifCon").find('img').attr("src", $(this).parents(".prdGifCon").find('img').attr("src").replace('.jpg','.gif'));
+		$(this).hide();
+	});
+	
+	/* 기본 SLIDER */
+	setTimeout(function(){
+		$('.prdSlider, .prdSlider02').slick({
+			dots: true,
+			customPaging: function(slider, i) { 
+				return '<div class="dotSpin"><span class="side side-left"><span class="fill"></span></span><span class="side side-right"><span class="fill"></span></span>'+i+'</div>';
+			},
+			infinite: true,
+			speed: 300,
+			slidesToShow: 1,
+			adaptiveHeight: true,
+			autoplay: true,
+			autoplaySpeed: 3000
+		});
+		$('.prdSlider, .prdSlider02').on('init', function(slick){
+			$('.slick-active').find('.dotSpin').addClass('ui-spinner');
+		});
+		
+		$('.prdSlider, .prdSlider02').on('afterChange', function(event, slick, currentSlide, nextSlide){
+			$('.dotSpin').removeClass('ui-spinner');
+			$('.slick-active').find('.dotSpin').addClass('ui-spinner');
+		});
+		
+		/* 메이크업 TYPE1 */
+		$('.customDot').on('init', function(slick){
+			$('.slick-active').find('.dotSpin').addClass('ui-spinner');
+		}); 
+		 $('.prdColorType1 .prdImg').slick({
+			slidesToShow: 1,
+			slidesToScroll: 1,
+			arrows: true,
+			fade: true,
+			dots: true,
+			customPaging: function(slider, i) { 
+				var thumb = $(slider.$slides[i]).data('thumb');
+				if(thumb){
+					return '<button type="button"><span><img src="'+thumb+'"></span></button>';    
+				} 
+			}, responsive: [{
+				breakpoint: 740,
+				settings: {
+					fade:false,
+					autoplay: true,
+					autoplaySpeed: 3000,
+					customPaging: function(slider, i) { 
+						return '<div class="dotSpin"><span class="side side-left"><span class="fill"></span></span><span class="side side-right"><span class="fill"></span></span>'+i+'</div>';   
+					}
+				}
+			}]
+		});
+		$('.customDot').on('afterChange', function(event, slick, currentSlide, nextSlide){
+			$('.dotSpin').removeClass('ui-spinner');
+			$('.slick-active').find('.dotSpin').addClass('ui-spinner');
+		});
+		
+		
+		/* 메이크업 TYPE2-1 */
+		$('.prdColorType2_1 .imgSlider').each(function(){
+			if($(this).find('img').length > 1){
+				$(this).slick({
+					arrows: true,
+					dots: true,
+					slidesToShow: 1,
+					slidesToScroll: 1
+				});
+			}
+		});
+		$(document).on('click', '.prdColorType2_1 .colorList .itemWrap', function(){
+			var prdColor = $(this).parents('.prdColorType2_1');
+			prdColor.find('.itemWrap').find('.chk').remove();
+			$(this).find('.imgChip').append('<span class="chk"></span>');
+			if(prdColor.hasClass('web')){
+				var slideIndex = $(this).index();
+				prdColor.find('.colorShot .itemWrap').hide();
+				prdColor.find('.colorShot .itemWrap').eq(slideIndex).show();
+			} else {
+				var slideIndex = $(this).attr('data-slick-index');
+				prdColor.find('.colorShot .itemWrap').css('opacity', 0);
+				prdColor.find('.colorShot .itemWrap').eq(slideIndex).css('opacity', 1);
+			}
+		});
+		$('.prdColorType2_1.mobile .colorList').slick({
+			arrows: false,
+			slidesToShow: 4,
+			centerMode: true,
+			swipeToSlide:true
+		});
+		
+		/* 메이크업 TYPE2-2 */
+		$('.prdColorType2_2 .colorList').slick({
+			infinite: true,
+			slidesToShow: 10,
+			slidesToScroll: 10,
+			responsive: [
+				{
+				  breakpoint: 740,
+				  settings: {
+					slidesToShow: 4,
+					slidesToScroll: 4
+				  }
+				}
+			]
+		});
+		$(document).on('click', '.prdColorType2_2 .colorList .slick-slide', function(){
+			var prdColor = $(this).parents('.prdColorType2_2');
+			var slideIndex = $(this).attr('data-slick-index');
+			prdColor.find('.chk').remove();
+			$(this).find('.imgWrap').append('<span class="chk"></span>');
+			prdColor.find('.colorShot .itemWrap').hide();
+			prdColor.find('.colorShot .itemWrap').eq(slideIndex).show();
+			
+		});
+		
+		/* 메이크업 TYPE3 */
+		$('.prdColorType3').on('click', '.colorChip li', function(){
+			var chipInx = $(this).index();
+			var thum = $(this).parents(".prdColorType3").find('.imgWrap li');
+			thum.hide();
+			thum.eq(chipInx).fadeIn();
+			$(this).siblings().removeClass();
+			$(this).addClass('on');
+		});
+		$('.prdColorType3.mobile .imgWrap').slick({
+			slidesToShow: 1,
+			slidesToScroll: 1,
+			arrows: true,
+			fade: true,
+			dots: true,
+			customPaging: function(slider, i) { 
+				var thumb = $(slider.$slides[i]).data('thumb');
+				if(thumb){
+					return '<button type="button"><span><img src="'+thumb+'"></span></button>';    
+				} 
+			}
+		});
+		/* TEXT FADE(FULL PAGE) */
+		fadeTxtEffect();
+	},1000);
+});
+
+/* TEXT FADE(FULL PAGE) */
+var fadeTxt = setInterval(fadeTxtEffect, 12000);
+function fadeTxtEffect() {
+    var txt = $(".fadeTxt");
+    txt.fadeIn(2000).delay(2000).fadeOut(2000);
+}

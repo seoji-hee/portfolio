@@ -1,0 +1,1717 @@
+/**
+ * 전자상거래 
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#product-data
+ * 
+ * 
+ * 상품정보 / 결제정보로 나누어짐  
+ * 상품클릭 -> 상품 상세피이지 조회 -> 장바구니담기/제거 -> 주문서작성 -> 구매완료 -> 환불  
+ * 
+ * 적용대상 : 
+ * 	1) Product Click (상품클릭)
+ * 		- SHOPPING : BEST SELLER / 최근 본 제품 / 오늘의 이슈 제품
+ * 		- 진행중인 이벤트 : 이벤트 본문
+ * 		- 메인 : 웹메인 BEST SERLLER
+ * 		- 리뷰 : 리뷰
+ * 		- 마이페이지 : 내찜목록 
+ *	2) Product Details (상품 상세 페이지 조회)
+ *	3) Add / Remove from Cart (장바구니담기/제거)
+ *	4) Checkout (주문서작성)
+ *	5) Purchase (구매완료)
+ *	6) Refund (환불) 
+ */
+
+var gv_GA_OrderProduct_id = ""; 			// 상품코드 : AA.eVAR32 와 동일
+var gv_GA_OrderProduct_name = ""; 			// 상품명
+var gv_GA_OrderProduct_brand = ""; 			// 브랜드 : INNISFREE
+var gv_GA_OrderProduct_category = ""; 		// 상품 카테고리 : Depth '/' 로 구분 
+var gv_GA_OrderProduct_price = ""; 			// 판매가 : 제품단가 또는 할인 적용된 노출 금액 
+var gv_GA_OrderProduct_quantity = ""; 		// 주문수량
+var gv_GA_OrderProduct_variant = ""; 		// 옵션선택
+var gv_GA_OrderProduct_coupon = ""; 		// 할인쿠폰 : 중복쿠폰사용은 '$'로 구분, 제품할인쿠폰, 장바구니쿠폰제외 
+
+var gv_GA_OrderProduct_dimension26 = "";	// 전자상거래 - shipping_type : Normal
+var gv_GA_OrderProduct_dimension27 = "";	// 전자상거래 - 제품옵션코드 : sap code
+var gv_GA_OrderProduct_dimension28 = "";	// 전자상거래 - 오프라인_주문매장코드 : X
+var gv_GA_OrderProduct_dimension29 = "";	// 전자상거래 - 오프라인_주문매장이름 : X
+var gv_GA_OrderProduct_dimension30 = "";	// 전자상거래 - 상품유형 : 판매상품
+var gv_GA_OrderProduct_dimension31 = "";	// 전자상거래 - 부가상품 유형 : X
+var gv_GA_OrderProduct_dimension32 = "";	// 전자상거래 - 제품 카테고리 코드 : AA.eVAR32 와 동일
+var gv_GA_OrderProduct_dimension33 = "";	// 전자상거래 - 결제 수단 : 신용카드_국민 / 신용카드_외환 / 무통장입금_농협 / 무통장입금_국민 / 원클릭결제 ..
+var gv_GA_OrderProduct_dimension34 = "";	// 전자상거래 - 프로모션 유형 : 1+1 / 2+2
+var gv_GA_OrderProduct_dimension35 = "";	// 전자상거래 - 제품 라인 카테고리 
+var gv_GA_OrderProduct_dimension43 = "";	// 전자상거래 - 카카오톡 선물하기 구분 : O / X
+
+
+var gv_GA_OrderProduct_metric1 = "";		// 뷰티포인트 적립 
+
+var gv_GA_OrderDeal_product_list = "";		// 상품전시영역 : BEST SELLER / 최근 본 제품 / : 제품목록 참조 (SHOPPING/진행중인이벤트/메인/리뷰/마이페이지) 
+var gv_GA_OrderDeal_checkout_option = "";	// 결제수단 : 신용카드 / 실시간 계좌이체 / 원클릭결제
+var gv_GA_OrderDeal_id = "";				// 주문번호
+var gv_GA_OrderDeal_revenue = "";			// 최종 결제 금액 : 할인 및 배송비 반영한 최종 결제금액
+var gv_GA_OrderDeal_tax = "";				// 뷰티포인트 할인금액
+var gv_GA_OrderDeal_shipping = "";			// 기타 할인금액 : 기타포인트 및 쿠폰 할인금액
+var gv_GA_OrderDeal_affiliation = "";		// 배송비 결제여부 : O / X
+var gv_GA_OrderDeal_coupon = "";			// 결제쿠폰 : 중복쿠폰사용은 '$' 로 구분, 장바구니쿠폰, 상품/카테고리에 귀속되는 쿠폰은 제외 
+
+var GaCartList = new Array();
+
+function makeScriptGA_OrderProduct_init()
+{
+	gv_GA_OrderProduct_id = "";				gv_GA_OrderProduct_name = "";			gv_GA_OrderProduct_brand = "";		
+	gv_GA_OrderProduct_category = "";		gv_GA_OrderProduct_price = ""; 			gv_GA_OrderProduct_quantity = "";	
+	gv_GA_OrderProduct_variant = "";		gv_GA_OrderProduct_coupon = "";  
+	
+	gv_GA_OrderProduct_dimension26 = "";	gv_GA_OrderProduct_dimension27 = "";	gv_GA_OrderProduct_dimension28 = "";
+	gv_GA_OrderProduct_dimension29 = "";	gv_GA_OrderProduct_dimension30 = "";	gv_GA_OrderProduct_dimension31 = "";
+	gv_GA_OrderProduct_dimension32 = "";	gv_GA_OrderProduct_dimension33 = "";	gv_GA_OrderProduct_dimension34 = "";
+	gv_GA_OrderProduct_dimension35 = "";	gv_GA_OrderProduct_dimension43 = "";
+	
+	gv_GA_OrderProduct_metric1 = "";
+	
+	gv_GA_OrderProduct_brand = "INNISFREE";
+	gv_GA_OrderProduct_price = "0"; 
+	gv_GA_OrderProduct_quantity = "0"; 
+	gv_GA_OrderProduct_metric1 = "0";
+}
+
+
+
+function makeScriptGA_OrderDeal_init()
+{
+	gv_GA_OrderDeal_product_list = "";		gv_GA_OrderDeal_checkout_option = "";	gv_GA_OrderDeal_id = "";
+	gv_GA_OrderDeal_revenue = "";			gv_GA_OrderDeal_tax = "";				gv_GA_OrderDeal_shipping = "";
+	gv_GA_OrderDeal_affiliation = "";		gv_GA_OrderDeal_coupon = "";
+	
+	gv_GA_OrderDeal_revenue = "0";
+	gv_GA_OrderDeal_tax = "0";
+	gv_GA_OrderDeal_shipping = "0";	
+}
+
+// 상품 클릭 시 호출 (OnClick Event)
+function makeScriptGA_Order_Step1_ProductClick(
+			product_list,
+			id, name, brand, category,
+			dimension32, dimension34, dimension35
+		)
+{
+
+	if(dimension34=="E"){
+		dimension34 = "1+1";
+	}else{
+		dimension34 = "";
+	}
+	//console.log("[product_list:"+product_list+"][id:"+id+"][name:"+name+"][brand:"+brand+"][category:"+category+"][dimension32:"+dimension32+"][dimension34:"+dimension34+"][dimension35:"+dimension35+"]");
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Click";
+	//var lv_EventInfo = "click";
+	gv_GA_OrderDeal_product_list = product_list;
+	gv_GA_OrderProduct_id = id;
+	gv_GA_OrderProduct_name = name;
+	gv_GA_OrderProduct_brand = brand;
+	gv_GA_OrderProduct_category = category;
+	
+	gv_GA_OrderProduct_dimension32 = dimension32;
+	gv_GA_OrderProduct_dimension34 = dimension34;
+	gv_GA_OrderProduct_dimension35 = dimension35;
+	
+	//gv_GA_dataLayer = []; // 삭제
+	
+	
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'click': {
+					'actionField': {'list': gv_GA_OrderDeal_product_list},	// 상품 전시 영역
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35		// 제품 라인 카테고리						
+					}]
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Click';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+	
+	/*
+	gv_GA_dataLayer.push({
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'click': {
+					'actionField': {'list': gv_GA_OrderDeal_product_list},	// 상품 전시 영역
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35		// 제품 라인 카테고리						
+					}]
+				}
+			}
+	});	
+	
+	var broswerInfo = navigator.userAgent;
+    if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	
+    	//add by hgham 2018-05-09
+    	window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+    	
+    } else {
+    	
+    	//makeScriptGA_TagManager();	// remove 2018-05-09 hgham
+    }
+    
+    */
+//	console.log("ProductClick >>  " + JSON.stringify(gv_GA_dataLayer));
+}
+
+//상품 상세피이지 로드시 호출 (OnLoad Event)
+function makeScriptGA_Order_Step2_ProductDetail(
+			id, name, brand, category,
+			dimension32, dimension34, dimension35
+		)
+{
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	if(dimension34=="E"){
+		dimension34 = "1+1";
+	}else{
+		dimension34 = "";
+	}
+	
+	var lv_Event = "Detail";
+	//var lv_EventInfo = "detail";
+	
+	gv_GA_OrderProduct_id = id;
+	gv_GA_OrderProduct_name = name;
+	gv_GA_OrderProduct_brand = brand;
+	gv_GA_OrderProduct_category = category;
+	
+	gv_GA_OrderProduct_dimension32 = dimension32;
+	gv_GA_OrderProduct_dimension34 = dimension34;
+	gv_GA_OrderProduct_dimension35 = dimension35;
+	
+	
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'detail': {
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리						
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35		// 제품 라인 카테고리						
+					}]
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Detail';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+	
+	
+	/*
+	gv_GA_dataLayer.push({
+		'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'detail': {
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리						
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35		// 제품 라인 카테고리						
+					}]
+				}
+			}
+	});	
+	
+	var broswerInfo = navigator.userAgent;
+    if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	
+    	//add by hgham 2018-05-09
+    	window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+    	
+    } else {
+    		//makeScriptGA_TagManager();	// remove 2018-05-09 hgham
+    }	
+    */
+   // console.log("  makeScriptGA_Order_Step2_ProductDetail 3333  >>  " + JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+}
+
+// 장바구니담기 버튼 클릭시 호출 (OnClick Event)
+// 종류가 다른 여러 상품을 처리할 경우 product 오브젝트를 추가함(?)
+function makeScriptGA_Order_Step3_CartAdd(prdlist,kakaoYn){
+		
+		
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();
+	//google tagging add
+	makeCartTagAll(prdlist);
+	
+	var lv_Event = "Add";
+	//var lv_EventInfo = "add";
+	
+	if(kakaoYn == "O") lv_Event = "Add_kakao";
+	//console.log("  gv_GA_dataLayer >>  " + JSON.stringify(gv_GA_dataLayer));
+	
+	
+
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'add': {
+					'products': prdlist
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Add';
+	}
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+//	console.log("CartAdd >>  " + JSON.stringify(gv_GA_dataLayer));
+
+	/*
+	gv_GA_dataLayer.push({
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'add': {
+					'products': prdlist
+				}
+			}
+	});	
+	
+	console.log("  makeScriptGA_Order_Step3_CartAdd >>  " + JSON.stringify(gv_GA_dataLayer));
+	
+	var broswerInfo = navigator.userAgent;
+	if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+	    //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+		window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+	} else {
+		//makeScriptGA_TagManager();	
+	}
+	*/
+}
+//장바구니비우기 버튼 클릭시 호출 (OnClick Event)
+//종류가 다른 여러 상품을 처리할 경우 product 오브젝트를 추가함(?)
+function makeScriptGA_Order_Step3_CartRemove(
+			id, name, brand, category,
+			price, quantity, variant, 
+			dimension27, dimension32, dimension34, dimension35,
+			dimension43
+		)
+{
+	//console.log("["+id+":///:"+name+":///:"+brand+":///:"+category );
+	//console.log(":///:"+price+":///:"+quantity+":///:"+variant );
+	//console.log(":///:"+dimension27+":///:"+dimension43+ ":///:"+dimension32+":///:"+dimension34+":///:"+dimension35);
+	
+			
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Remove";
+	//var lv_EventInfo = "remove";
+	
+	gv_GA_OrderProduct_id = id;
+	gv_GA_OrderProduct_name = name;
+	gv_GA_OrderProduct_brand = brand;
+	gv_GA_OrderProduct_category = category;
+	
+	gv_GA_OrderProduct_dimension32 = dimension32;
+	gv_GA_OrderProduct_dimension34 = dimension34;
+	gv_GA_OrderProduct_dimension35 = dimension35;
+	
+	gv_GA_OrderProduct_price = price;
+	gv_GA_OrderProduct_quantity = quantity;
+	gv_GA_OrderProduct_variant = variant;
+	gv_GA_OrderProduct_dimension27 = dimension27;
+	
+	gv_GA_OrderProduct_dimension43 = dimension43;
+	
+	//gv_GA_dataLayer = [];
+
+
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'remove': {
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리
+						'price': gv_GA_OrderProduct_price,					// 판매가
+						'quantity': gv_GA_OrderProduct_quantity,			// 주문수량
+						'variant': gv_GA_OrderProduct_variant,				// 옵션선택
+						'dimension27': gv_GA_OrderProduct_dimension27,		// 제품옵션코드						
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35,		// 제품 라인 카테고리	
+						'dimension43': gv_GA_OrderProduct_dimension43		// 카카오톡 선물하기						
+					}]
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Remove';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+	
+	/*
+	gv_GA_dataLayer.push({
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'remove': {
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리
+						'price': gv_GA_OrderProduct_price,					// 판매가
+						'quantity': gv_GA_OrderProduct_quantity,			// 주문수량
+						'variant': gv_GA_OrderProduct_variant,				// 옵션선택
+						'dimension27': gv_GA_OrderProduct_dimension27,		// 제품옵션코드						
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35,		// 제품 라인 카테고리	
+						'dimension43': gv_GA_OrderProduct_dimension43		// 카카오톡 선물하기						
+					}]
+				}
+			}
+	});	
+	
+	
+    console.log("  gv_GA_dataLayer>>  " + JSON.stringify(gv_GA_dataLayer));
+	
+	var broswerInfo = navigator.userAgent;
+    if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	//add by hgham 2018-05-09
+    	window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+    	
+    } else {
+    	//makeScriptGA_TagManager();	
+    }
+    
+    */
+	
+   // console.log("  gv_GA_dataLayer>>  " + JSON.stringify(gv_GA_dataLayer));
+
+}
+
+//장바구니비우기 버튼 클릭시 호출 (OnClick Event)
+//종류가 다른 여러 상품을 처리할 경우 product 오브젝트를 추가함(?)
+function makeScriptGA_Order_Step3_CartRemoveList(productList)
+{
+	
+			
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Remove";
+	
+
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'remove': {
+					'products': productList				
+
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Remove';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+	
+	
+	/*
+	//var lv_EventInfo = "remove";
+	//gv_GA_dataLayer = [];
+	gv_GA_dataLayer.push({
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'remove': {
+					'products': productList				
+
+				}
+			}
+	});	
+	
+	
+	
+	var broswerInfo = navigator.userAgent;
+  if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+      //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+	  //add by hgham 2018-05-09
+  	  window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+  	
+  } else {
+  	//makeScriptGA_TagManager();	
+  }
+  */
+  //console.log("Product List =====");
+  //console.log(JSON.stringify(productList));
+  //console.log("GaCart List =====");
+  //console.log(JSON.stringify(GaCartList));
+  //console.log("makeScriptGA_Order_Step3_CartRemoveList =====");
+//  console.log("CartRemoveLis >> " + JSON.stringify(gv_GA_dataLayer));
+}
+
+//주문하기 버튼 클릭시 호출 (OnClick Event)
+//종류가 다른 여러 상품을 처리할 경우 product 오브젝트를 추가함(?)
+function makeScriptGA_Order_Step4_Checkout1(
+			id, name, brand, category,
+			dimension32, dimension34, dimension35,
+			price, quantity, variant, dimension27,
+			dimension43
+		)
+{
+	//console.log("["+id+":///:"+name+":///:"+brand+":///:"+category+":///:"+dimension32+":///:"+dimension34+":///:"+dimension35+":///:"+price+":///:"+quantity+":///:"+variant+":///:"+dimension27+":///:"+dimension43+"]");
+	
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Checkout";
+	//var lv_EventInfo = "checkout";
+	
+	gv_GA_OrderProduct_id = id;
+	gv_GA_OrderProduct_name = name;
+	gv_GA_OrderProduct_brand = brand;
+	gv_GA_OrderProduct_category = category;
+	
+	gv_GA_OrderProduct_dimension32 = dimension32;
+	gv_GA_OrderProduct_dimension34 = dimension34;
+	gv_GA_OrderProduct_dimension35 = dimension35;
+	
+	gv_GA_OrderProduct_price = parseInt(price);
+	gv_GA_OrderProduct_quantity = parseInt(quantity);
+	gv_GA_OrderProduct_variant = variant;
+	gv_GA_OrderProduct_dimension27 = dimension27;
+	
+	gv_GA_OrderProduct_dimension43 = dimension43;
+	
+	//gv_GA_dataLayer = [];
+	
+
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'checkout': {
+					'actionField': {'step': 1},
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category.replace('/','_'),			// 상품 카테고리
+						'price': gv_GA_OrderProduct_price,					// 판매가
+						'quantity': gv_GA_OrderProduct_quantity,			// 주문수량
+						'variant': gv_GA_OrderProduct_variant,				// 옵션선택
+						'dimension27': gv_GA_OrderProduct_dimension27,		// 제품옵션코드						
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35,		// 제품 라인 카테고리	
+						'dimension43': gv_GA_OrderProduct_dimension43		// 카카오톡 선물하기					
+					}]
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Checkout';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+//	console.log("Checkout1 >> " + JSON.stringify(gv_GA_dataLayer));
+
+	/*
+	gv_GA_dataLayer.push({
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'checkout': {
+					'actionField': {'step': 1},
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category.replace('/','_'),			// 상품 카테고리
+						'price': gv_GA_OrderProduct_price,					// 판매가
+						'quantity': gv_GA_OrderProduct_quantity,			// 주문수량
+						'variant': gv_GA_OrderProduct_variant,				// 옵션선택
+						'dimension27': gv_GA_OrderProduct_dimension27,		// 제품옵션코드						
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35,		// 제품 라인 카테고리	
+						'dimension43': gv_GA_OrderProduct_dimension43		// 카카오톡 선물하기					
+					}]
+				}
+			}
+	});	
+	
+	var broswerInfo = navigator.userAgent;
+    if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	
+    	//add by hgham 2018-05-09
+    	window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+    	
+    } else {
+    	//makeScriptGA_TagManager();	
+    }
+    
+    */
+}
+
+//주문하기 버튼 클릭시 호출 (OnClick Event)
+//종류가 다른 여러 상품을 처리할 경우 product 오브젝트를 추가함(?)
+function makeScriptGA_Order_Step4_Checkout1(products	)
+{
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Checkout";
+	//var lv_EventInfo = "checkout";
+	//gv_GA_dataLayer = [];
+	
+
+
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'checkout': {
+					'actionField': {'step': 1},
+					'products': products
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Checkout';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+//	console.log("Checkout1(products	) >> " + JSON.stringify(gv_GA_dataLayer));
+
+	/*
+	gv_GA_dataLayer.push({
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'checkout': {
+					'actionField': {'step': 1},
+					'products': products
+				}
+			}
+	});	
+	
+	var broswerInfo = navigator.userAgent;
+  if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+      //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+	  //add by hgham 2018-05-09
+	  window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+	  	
+  } else {
+ 		//makeScriptGA_TagManager();	
+  }
+  console.log("====== makeScriptGA_Order_Step4_Checkout1 =======");
+  console.log(JSON.stringify(gv_GA_dataLayer));
+  */
+}
+
+//결제하기 버튼 클릭시 호출 (OnClick Event)
+//종류가 다른 여러 상품을 처리할 경우 product 오브젝트를 추가함(?)
+function makeScriptGA_Order_Step4_Checkout2(
+			id, name, brand, category,
+			dimension32, dimension34, dimension35,
+			price, quantity, variant, dimension27,
+			dimension43,
+			checkout_option,
+			dimension26, dimension28, dimension29, dimension30, dimension31
+		)
+{
+	//console.log("["+id+":///:"+name+":///:"+brand+":///:"+category+":///:"+dimension32+":///:"+dimension34+":///:"+dimension35+":///:"+price+":///:"+quantity+":///:"+variant+":///:"+dimension27+":///:"+dimension43+":///:"+checkout_option+":///:"+dimension26+":///:"+dimension28+":///:"+dimension29+":///:"+dimension30+":///:"+dimension31+"]");
+	
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Checkout";
+	//var lv_EventInfo = "checkout";
+	
+	gv_GA_OrderProduct_id = id;
+	gv_GA_OrderProduct_name = name;
+	gv_GA_OrderProduct_brand = brand;
+	gv_GA_OrderProduct_category = category;
+	
+	gv_GA_OrderProduct_dimension32 = dimension32;
+	gv_GA_OrderProduct_dimension34 = dimension34;
+	gv_GA_OrderProduct_dimension35 = dimension35;
+	
+	gv_GA_OrderProduct_price = price;
+	gv_GA_OrderProduct_quantity = quantity;
+	gv_GA_OrderProduct_variant = variant;
+	gv_GA_OrderProduct_dimension27 = dimension27;
+
+	gv_GA_OrderProduct_dimension43 = dimension43;
+	
+	gv_GA_OrderDeal_checkout_option = checkout_option;
+	gv_GA_OrderProduct_dimension26 = dimension26;
+	gv_GA_OrderProduct_dimension28 = dimension28;
+	gv_GA_OrderProduct_dimension29 = dimension29;
+	gv_GA_OrderProduct_dimension30 = dimension30;
+	gv_GA_OrderProduct_dimension31 = dimension31;
+	
+
+
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'checkout': {
+					'actionField': {'step': 2, 'option': gv_GA_OrderDeal_checkout_option},	// 결제수단 
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리
+						'price': gv_GA_OrderProduct_price,					// 판매가
+						'quantity': gv_GA_OrderProduct_quantity,			// 주문수량
+						'variant': gv_GA_OrderProduct_variant,				// 옵션선택
+						'dimension26': gv_GA_OrderProduct_dimension26,		// shipping_type	
+						'dimension27': gv_GA_OrderProduct_dimension27,		// 제품옵션코드		
+						'dimension28': gv_GA_OrderProduct_dimension28,		// 오프라인_주문매장코드		
+						'dimension29': gv_GA_OrderProduct_dimension29,		// 오프라인_주문매장이름		
+						'dimension30': gv_GA_OrderProduct_dimension30,		// 상품유형		
+						'dimension31': gv_GA_OrderProduct_dimension31,		// 부가상품유형		
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35,		// 제품 라인 카테고리	
+						'dimension43': gv_GA_OrderProduct_dimension43		// 카카오톡 선물하기					
+					}]
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Checkout';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+//	console.log(JSON.stringify("Checkout2 >> " + gv_GA_dataLayer));
+
+	/*
+	//gv_GA_dataLayer = [];
+	gv_GA_dataLayer.push({
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'checkout': {
+					'actionField': {'step': 2, 'option': gv_GA_OrderDeal_checkout_option},	// 결제수단 
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리
+						'price': gv_GA_OrderProduct_price,					// 판매가
+						'quantity': gv_GA_OrderProduct_quantity,			// 주문수량
+						'variant': gv_GA_OrderProduct_variant,				// 옵션선택
+						'dimension26': gv_GA_OrderProduct_dimension26,		// shipping_type	
+						'dimension27': gv_GA_OrderProduct_dimension27,		// 제품옵션코드		
+						'dimension28': gv_GA_OrderProduct_dimension28,		// 오프라인_주문매장코드		
+						'dimension29': gv_GA_OrderProduct_dimension29,		// 오프라인_주문매장이름		
+						'dimension30': gv_GA_OrderProduct_dimension30,		// 상품유형		
+						'dimension31': gv_GA_OrderProduct_dimension31,		// 부가상품유형		
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드 
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35,		// 제품 라인 카테고리	
+						'dimension43': gv_GA_OrderProduct_dimension43		// 카카오톡 선물하기					
+					}]
+				}
+			}
+	});	
+	
+	var broswerInfo = navigator.userAgent;
+    if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	//add by hgham 2018-05-09
+    	window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+    	
+    	
+    } else {
+    	//makeScriptGA_TagManager();	
+    }
+    
+    */
+}
+
+
+//결제하기 버튼 클릭시 호출 (OnClick Event)
+//종류가 다른 여러 상품을 처리할 경우 product 오브젝트를 추가함(?)
+function makeScriptGA_Order_Step4_Checkout2(checkout_option, products)
+{
+	
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Checkout";
+	//var lv_EventInfo = "checkout";
+	//gv_GA_dataLayer = [];
+	
+	
+
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'checkout': {
+					'actionField': {'step': 2, 'option': checkout_option},	//결제수단 
+					'products': products
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Checkout';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+//	console.log(JSON.stringify("Checkout2(checkout_option, products) >> " + gv_GA_dataLayer));
+	
+	/*
+	gv_GA_dataLayer.push({
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'checkout': {
+					'actionField': {'step': 2, 'option': checkout_option},	// 결제수단 
+					'products': products
+				}
+			}
+	});	
+	
+	var broswerInfo = navigator.userAgent;
+  if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+      //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+	  //add by hgham 2018-05-09
+  	  window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+  	
+  } else {
+	  //makeScriptGA_TagManager();	
+  }
+  */
+//  console.log("===== makeScriptGA_Order_Step4_Checkout2 ====");
+ // console.log(JSON.stringify(gv_GA_dataLayer));
+}
+
+//결제완료 화면 로드시 호출 (OnLoad Event)
+//종류가 다른 여러 상품을 처리할 경우 product 오브젝트를 추가함(?)
+function makeScriptGA_Order_Step5_Purchase(
+			id, name, brand, category,
+			dimension32, dimension34, dimension35,
+			price, quantity, variant, dimension27,
+			dimension43,
+			checkout_option,
+			dimension26, dimension28, dimension29, dimension30, dimension31,
+			deal_id, deal_revenue, deal_tax, deal_shipping, deal_affiliation, deal_coupon,
+			product_coupon, 
+			dimension33,
+			prodcut_metrics
+			
+		)
+{
+//	console.log("["+id+":///:"+name+":///:"+brand+":///:"+category+":///:"+dimension32+":///:"+dimension34+":///:"+dimension35+":///:"+price+":///:"+quantity+":///:"+variant+":///:"
+//			+dimension27+":///:"+dimension43+":///:"+checkout_option+":///:"+dimension26+":///:"+dimension28+":///:"+dimension29+":///:"+dimension30+":///:"+dimension31
+//			+":///:"+deal_id+":///:"+deal_revenue+":///:"+deal_tax+":///:"+deal_shipping+":///:"+deal_affiliation+":///:"+deal_coupon+":///:"+product_coupon+":///:"+dimension33+":///:"
+//			+prodcut_metrics+"]");
+	
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Purchase";
+	//var lv_EventInfo = "purchase";
+	
+	gv_GA_OrderProduct_id = id;
+	gv_GA_OrderProduct_name = name;
+	gv_GA_OrderProduct_brand = brand;
+	gv_GA_OrderProduct_category = category;
+	
+	gv_GA_OrderProduct_dimension32 = dimension32;
+	gv_GA_OrderProduct_dimension34 = dimension34;
+	gv_GA_OrderProduct_dimension35 = dimension35;
+	
+	gv_GA_OrderProduct_price = price;
+	gv_GA_OrderProduct_quantity = quantity;
+	gv_GA_OrderProduct_variant = variant;
+	gv_GA_OrderProduct_dimension27 = dimension27;
+	
+	gv_GA_OrderProduct_dimension43 = dimension43;
+		
+	gv_GA_OrderDeal_checkout_option = checkout_option;
+	gv_GA_OrderProduct_dimension26 = dimension26;
+	gv_GA_OrderProduct_dimension28 = dimension28;
+	gv_GA_OrderProduct_dimension29 = dimension29;
+	gv_GA_OrderProduct_dimension30 = dimension30;
+	gv_GA_OrderProduct_dimension31 = dimension31;
+	
+	gv_GA_OrderDeal_id = deal_id;				
+	gv_GA_OrderDeal_revenue = deal_revenue;			
+	gv_GA_OrderDeal_tax = deal_tax;				
+	gv_GA_OrderDeal_shipping = deal_shipping;			
+	gv_GA_OrderDeal_affiliation = deal_affiliation;		
+	gv_GA_OrderDeal_coupon = deal_coupon;			
+
+	gv_GA_OrderProduct_coupon = product_coupon;
+	gv_GA_OrderProduct_dimension33 = dimension33;
+	gv_GA_OrderProduct_metric1 = prodcut_metrics;
+	//gv_GA_dataLayer = [];
+	
+	
+
+
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'purchase': {
+					'actionField': {
+						'id': gv_GA_OrderDeal_id,							// 주문번호
+						'revenue': gv_GA_OrderDeal_revenue,					// 최종 결제 금액
+						'tax': gv_GA_OrderDeal_tax,							// 뷰티포인트 할인금액 
+						'shipping': gv_GA_OrderDeal_shipping,				// 기타 할인금액
+						'affiliation': gv_GA_OrderDeal_affiliation,			// 배송비 결제여부
+						'coupon': gv_GA_OrderDeal_coupon 					// 결제쿠폰							
+					},	
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리
+						'price': gv_GA_OrderProduct_price,					// 판매가
+						'quantity': gv_GA_OrderProduct_quantity,			// 주문수량
+						'variant': gv_GA_OrderProduct_variant,				// 옵션선택
+						'coupon': gv_GA_OrderProduct_coupon,				// 할인쿠폰
+						'dimension26': gv_GA_OrderProduct_dimension26,		// shipping_type	
+						'dimension27': gv_GA_OrderProduct_dimension27,		// 제품옵션코드		
+						'dimension28': gv_GA_OrderProduct_dimension28,		// 오프라인_주문매장코드		
+						'dimension29': gv_GA_OrderProduct_dimension29,		// 오프라인_주문매장이름		
+						'dimension30': gv_GA_OrderProduct_dimension30,		// 상품유형		
+						'dimension31': gv_GA_OrderProduct_dimension31,		// 부가상품유형		
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드
+						'dimension33': gv_GA_OrderProduct_dimension33,		// 결제수단
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35,		// 제품 라인 카테고리	
+						'dimension43': gv_GA_OrderProduct_dimension43,		// 카카오톡 선물하기			
+						'metric1': gv_GA_OrderProduct_metric1				// 뷰티포인트 적립
+					}]
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Purchase';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+//	console.log("makeScriptGA_Order_Step5_Purchase >> " + JSON.stringify(gv_GA_dataLayer));
+	
+	
+	/*
+	gv_GA_dataLayer.push({
+		'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'purchase': {
+					'actionField': {
+						'id': gv_GA_OrderDeal_id,							// 주문번호
+						'revenue': gv_GA_OrderDeal_revenue,					// 최종 결제 금액
+						'tax': gv_GA_OrderDeal_tax,							// 뷰티포인트 할인금액 
+						'shipping': gv_GA_OrderDeal_shipping,				// 기타 할인금액
+						'affiliation': gv_GA_OrderDeal_affiliation,			// 배송비 결제여부
+						'coupon': gv_GA_OrderDeal_coupon 					// 결제쿠폰							
+					},	
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'name': gv_GA_OrderProduct_name,					// 상품명
+						'brand': gv_GA_OrderProduct_brand,					// 브랜드
+						'category': gv_GA_OrderProduct_category,			// 상품 카테고리
+						'price': gv_GA_OrderProduct_price,					// 판매가
+						'quantity': gv_GA_OrderProduct_quantity,			// 주문수량
+						'variant': gv_GA_OrderProduct_variant,				// 옵션선택
+						'coupon': gv_GA_OrderProduct_coupon,				// 할인쿠폰
+						'dimension26': gv_GA_OrderProduct_dimension26,		// shipping_type	
+						'dimension27': gv_GA_OrderProduct_dimension27,		// 제품옵션코드		
+						'dimension28': gv_GA_OrderProduct_dimension28,		// 오프라인_주문매장코드		
+						'dimension29': gv_GA_OrderProduct_dimension29,		// 오프라인_주문매장이름		
+						'dimension30': gv_GA_OrderProduct_dimension30,		// 상품유형		
+						'dimension31': gv_GA_OrderProduct_dimension31,		// 부가상품유형		
+						'dimension32': gv_GA_OrderProduct_dimension32,		// 제품 카테고리코드
+						'dimension33': gv_GA_OrderProduct_dimension33,		// 결제수단
+						'dimension34': gv_GA_OrderProduct_dimension34,		// 프로모션 유형 
+						'dimension35': gv_GA_OrderProduct_dimension35,		// 제품 라인 카테고리	
+						'dimension43': gv_GA_OrderProduct_dimension43,		// 카카오톡 선물하기			
+						'metric1': gv_GA_OrderProduct_metric1				// 뷰티포인트 적립
+					}]
+				}
+			}
+	});	
+	
+	var broswerInfo = navigator.userAgent;
+    if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	
+    	//add by hgham 2018-05-09
+    	window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+    } else {
+    	//makeScriptGA_TagManager();	
+    }
+    
+    */
+}
+
+function makeScriptGA_Order_Step5_Purchase(action, products)
+{
+	
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Purchase";
+	//var lv_EventInfo = "purchase";
+	
+	
+
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'purchase': {
+					'actionField': action,	
+					'products': products
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Purchase';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+//	console.log("Purchase(action, products) >> " + JSON.stringify(gv_GA_dataLayer));
+	
+	
+	/*
+	//gv_GA_dataLayer = [];
+	gv_GA_dataLayer.push({
+		'event': lv_Event,
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'purchase': {
+					'actionField': action,	
+					'products': products
+				}
+			}
+	});	
+	
+	var broswerInfo = navigator.userAgent;
+    if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	
+    	//add by hgham 2018-05-09
+    	window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+    	
+    } else {
+    	//makeScriptGA_TagManager();	
+    }
+    */
+//    console.log("==== makeScriptGA_Order_Step5_Purchase =====");
+//    console.log(JSON.stringify(action));
+ //   console.log(JSON.stringify(products));
+ //   console.log(JSON.stringify(gv_GA_dataLayer));
+}
+
+//주문취소 버튼 클릭 후 주문 전체 취소 처리 완료시 실행 (OnLoad Event)
+function makeScriptGA_Order_Step6_RefundAll(
+			deal_id ,products
+		)
+{
+//	console.log("["+deal_id+"]");
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Refund";
+	//var lv_EventInfo = "refund";
+	
+	gv_GA_OrderDeal_id = deal_id;	
+	
+	
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,			
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'refund': {
+					'actionField': {
+						'id': gv_GA_OrderDeal_id							// 주문번호				
+					},
+					'products':products
+					
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Refund';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+	//console.log(JSON.stringify(gv_GA_dataLayer));
+	
+	//gv_GA_dataLayer = [];
+	/*
+	gv_GA_dataLayer.push({
+			'event': lv_Event,			
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'refund': {
+					'actionField': {
+						'id': gv_GA_OrderDeal_id							// 주문번호				
+					},
+					'products':products
+					
+				}
+			}
+	});	
+	
+	console.log("==== makeScriptGA_Order_Step6_RefundAll =====");
+	console.log(JSON.stringify(gv_GA_dataLayer));
+	
+	var broswerInfo = navigator.userAgent;
+    if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	
+    	//add by hgham 2018-05-09
+    	window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+    	
+    } else {
+    	//makeScriptGA_TagManager();	
+    }
+    */
+	
+//console.log("==== makeScriptGA_Order_Step6_RefundAll =====");
+//	console.log(JSON.stringify(gv_GA_dataLayer));
+
+}
+
+//주문취소 버튼 클릭 후 부분주문 저체 취소 처리 완료시 실행 (OnLoad Event)
+function makeScriptGA_Order_Step6_RefundPartial(
+			deal_id,
+			id, quantity			
+		)
+{
+//	console.log("["+deal_id+":///:"+id+":///:"+quantity+"]");
+	makeScriptGA_OrderProduct_init();
+	makeScriptGA_OrderDeal_init();	
+	
+	var lv_Event = "Refund";
+	//var lv_EventInfo = "refund";
+	
+	gv_GA_OrderDeal_id = deal_id;	
+	gv_GA_OrderProduct_id = id;
+	gv_GA_OrderProduct_quantity = parseInt(quantity);
+	
+	//add by hgham 2018-05-16
+	var ga_ecomerce_data ={
+			'event': lv_Event,			
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'refund': {
+					'actionField': {
+						'id': gv_GA_OrderDeal_id							// 주문번호				
+					},
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'quantity': gv_GA_OrderProduct_quantity				// 상품수량 
+					}]
+				}
+			}
+	}
+	
+	var browserInfo = navigator.userAgent;
+	
+	if (browserInfo.indexOf("AP_Android") > -1 || browserInfo.indexOf("AP_iOS") > -1) {
+		ga_ecomerce_data.type='E';
+		ga_ecomerce_data.category='Ecommerce';
+		ga_ecomerce_data.action='Refund';
+	}
+	
+	
+	if(browserInfo.indexOf("AP_Android") > -1){
+//		var delayTime = setTimeout(function() {
+		try{
+			window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+		}catch(e){
+		}
+//		}, 500);
+//		clearTimeout(delayTime);		
+	}else if(browserInfo.indexOf("AP_iOS") > -1) {		
+		var checkExistInniApp = setInterval(function() {
+//			console.log("check - window.inniApp.GA_Tagging ");
+			if (typeof window.inniApp.GA_Tagging !== "undefined") {
+//				console.log("confirm - window.inniApp.GA_Tagging ");
+				clearInterval(checkExistInniApp);
+				window.inniApp.GA_Tagging(JSON.stringify($.extend(true,{}, gv_GA_dataLayer[0], ga_ecomerce_data )));
+			}
+		}, 500);
+	}
+	else{
+		gv_GA_dataLayer.push(ga_ecomerce_data);
+	}
+	
+	
+	/*
+	//gv_GA_dataLayer = [];
+	gv_GA_dataLayer.push({
+			'event': lv_Event,			
+			'ecommerce': {
+				'currencyCode': 'KRW',
+				'refund': {
+					'actionField': {
+						'id': gv_GA_OrderDeal_id							// 주문번호				
+					},
+					'products': [{
+						'id': gv_GA_OrderProduct_id,						// 상품코드
+						'quantity': gv_GA_OrderProduct_quantity				// 상품수량 
+					}]
+				}
+			}
+	});	
+	
+	var broswerInfo = navigator.userAgent;
+    if (broswerInfo.indexOf("AP_Android") > -1 || broswerInfo.indexOf("AP_iOS") > -1) {
+        //Android or iOS WebView에서 로드 시 Google Analytics 와 Google Tagmanager는 로드하지 않습니다.
+    	
+    	//add by hgham 2018-05-09
+    	window.inniApp.GA_Tagging(JSON.stringify(gv_GA_dataLayer));
+    } else {
+    	//makeScriptGA_TagManager();	
+    }
+    
+    */
+	
+	//console.log(JSON.stringify(gv_GA_dataLayer));
+}
+
+//GA Product 구조 Object 생성
+function createProduct(obj){
+	var GaObject = new Object();
+	var objectId = $(obj).attr("id");
+//	console.log('objectId : ' +  objectId);
+	GaObject.id = $(obj).attr("$prdseq");
+	GaObject.name = $(obj).attr("$prdnm");
+	GaObject.brand = 'INNISFREE';					// 브랜드
+	
+	var categoryNm = "";
+	if($(obj).attr("$catnm01")){
+		categoryNm = $(obj).attr("$catnm01");
+	}
+	if($(obj).attr("$catnm02")){
+		categoryNm =categoryNm+"/"+$(obj).attr("$catnm02");
+	}
+	
+	GaObject.category = categoryNm;
+	
+	//n+n 상품인경우 상품가격 1/2
+	if(!$(obj).attr("$multipurtype") || $(obj).attr("$multipurtype") === ''){
+		GaObject.price = parseInt($(obj).attr("$salprc"));					// 판매가
+	}else{
+		
+		 if($(obj).attr("$ptype") =='E'){
+			 	GaObject.dimension34 = "1+1";	// 프로모션 유형
+				GaObject.price = parseInt($(obj).attr("$salprc"))/2;					// 판매가
+		 } 
+		
+	}
+	GaObject.quantity = parseInt($(obj).attr("$ordqty"));			// 주문수량
+	
+	//sapprdcd가 있더라도 옵션명이 없으면 옵션없음으로 처리
+	if($.trim($(obj).attr("$kindnm")) == ""){
+		GaObject.variant = '옵션없음';
+	}else{
+		GaObject.variant = $(obj).attr("$kindnm");   		 // 옵션선택
+	}
+	
+	GaObject.dimension35 = $(obj).attr("$catnm03");          // 제품 라인 카테고리
+	
+	//Tag ID가 prdOrd로 시작하면 일반 그외 선물하기
+	//console.log('objectId.indexOf(present) : ' + objectId.indexOf("present"));
+	GaObject.dimension43 = objectId.indexOf("present") < 0 ? 'X' : 'O';
+	
+	//add by hg 2018-04-25 
+	GaObject.dimension27 = $(obj).attr("$sapprdcd"); 					//제품옵션코드 
+	GaObject.dimension32 = $(obj).attr("$catcd02") == "" ? $(obj).attr("$catcd01") : $(obj).attr("$catcd02"); //제품 카테고리 코드
+    
+	
+	return GaObject;
+}
+
+//장바구니 삭제
+$.fn.makeScriptGAOrderStep3CartRemoveList = function(){
+	var GaObjectList = new Array();
+	$(this).each(function(){
+		var GaObject = createProduct(this);
+		
+		GaObjectList.push(GaObject);
+		
+	})
+	GaCartList = new Array();
+	makeScriptGA_Order_Step3_CartRemoveList(GaObjectList);
+}
+
+//주문하기 버튼 클릭
+$.fn.makeScriptGAOrderStep4Checkout1 = function(){
+	var GaObjectList = new Array();
+	$(this).each(function(){
+		var GaObject = createProduct(this);
+		GaObjectList.push(GaObject);
+	})
+	makeScriptGA_Order_Step4_Checkout1(GaObjectList);
+}
+
+//결제하기 버튼 클릭
+$.fn.makeScriptGAOrderStep4Checkout2 = function(paymentType){
+	//일반택배 값
+	var shopCd = "X";
+	var shopNm = "X";
+	var dlvType = "Normal";
+	
+	//매장수령인 경우
+	if($("#limit_yn").val() === "Y" && $("#shopCd").val() !== ""){
+		shopCd = $("#shopCd").val();
+		shopNm =$("#shopNm").val();
+		dlvType = "";
+    }
+	  
+	var GaObjectList = new Array();
+	$(this).each(function(){
+		var GaObject = createProduct(this);
+		GaObject.dimension26 = dlvType;// shipping_type
+		GaObject.dimension28 = shopCd;         // 오프라인_주문매장코드		
+		GaObject.dimension29 = shopNm;        // 오프라인_주문매장이름		
+		GaObject.dimension30 = "판매상품";    // 상품유형		
+		GaObject.dimension31 = "X"                // 부가상품유형		
+		GaObjectList.push(GaObject);
+	});
+	
+	makeScriptGA_Order_Step4_Checkout2(paymentType, GaObjectList);
+}
+
+//결제완료
+$.fn.makeScriptGAOrderStep5Purchase = function(paymentType, action){
+	//일반택배 값
+	var shopCd = "X";
+	var shopNm = "X";
+	var dlvType = "Normal";
+	var limitYn = $(action).attr("$limityn");
+	
+	//매장수령인 경우
+	if(limitYn === "Y" && $(action).attr("$shopcd") !== ""){
+		shopCd = $(action).attr("$shopcd");
+		shopNm =$(action).attr("$shopnm");
+		dlvType = "";
+    }
+    
+	var GaObjectList = new Array();
+	$(this).each(function(){
+		var GaObject = createProduct(this);
+		
+		GaObject.metric1 = $(this).attr("$addpt");
+		GaObject.dimension33 = paymentType;
+		GaObject.dimension26 = dlvType;// shipping_type
+		GaObject.dimension28 = shopCd;         // 오프라인_주문매장코드		
+		GaObject.dimension29 = shopNm;        // 오프라인_주문매장이름		
+		GaObject.dimension30 = "판매상품";    // 상품유형		
+		GaObject.dimension31 = "X"                // 부가상품유형
+		GaObject.coupon = $(this).attr("$cpnno") == '0' ? '' : $(this).attr("$cpnno"); // 할인 쿠폰		
+		GaObjectList.push(GaObject);
+	});
+	
+	var GaAction = new Object();
+	GaAction.id=$(action).attr("$ordseq");              // 주문번호
+	GaAction.revenue=parseInt($(action).attr("$totpurprc"));     // 최종 결제 금액
+	GaAction.tax=parseInt($(action).attr("$ptuseprc"));         // 뷰티포인트 할인금액
+	
+	var etcPrc ="";
+	etcPrc = Number($(action).attr("$cpnprc"))+Number($(action).attr("$hpyptuseprc"))+Number($(action).attr("$okptuseprc"));
+	GaAction.shipping=etcPrc;      				    // 기타 할인금액
+	
+	
+	var dlvPay = "X";
+	if(parseInt($(action).attr("$dlvcost")) != 0){
+		var dlvPay = "O";	
+	}
+	
+	GaAction.affiliation=dlvPay;         // 배송비 결제여부
+	GaAction.coupon=$(action).attr("$cartcpnseq");         // 쿠폰
+	
+	GaAction.checkout_option=paymentType;         // 결제수단
+	
+	makeScriptGA_Order_Step5_Purchase(GaAction, GaObjectList);
+	
+}
+
+

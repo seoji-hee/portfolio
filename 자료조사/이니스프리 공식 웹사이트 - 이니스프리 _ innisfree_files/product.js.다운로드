@@ -1,0 +1,1043 @@
+var dc_salPrc = 0;//정상단가
+var npercentFl = "N";//N%할인 상품 플래그
+
+//JS Map
+function MapProduct() {
+    this.elements = new Array();
+
+    this.put = function(_key, _value) {
+        this.elements.push( {
+            key : _key,
+            value : _value
+        });
+    };
+	
+    this.get = function(_key) {
+        try {
+            for (var j = 0; j < this.elements.length; j++) {
+                if (this.elements[j].key == _key) {
+                    return this.elements[j].value;
+                }
+            }
+        } catch (e) {
+            return null;
+        }
+    };
+	
+	this.containsKey = function(_key) {
+        var bln = false;
+        try {
+            for (var j = 0; j < this.elements.length; j++) {
+                if (this.elements[j].key == _key) {
+                    bln = true;
+                }
+            }
+        } catch (e) {
+            bln = false;
+        }
+        return bln;
+    };
+	
+	this.remove = function(_key) {
+        var bln = false;
+        try {
+            for (var j = 0; j < this.elements.length; j++) {
+                if (this.elements[j].key == _key) {
+                    this.elements.splice(j, 1);
+                    return true;
+                }
+            }
+        } catch (e) {
+            bln = false;
+        }
+        return bln;
+    };
+	
+	this.keys = function() {
+		var arr = new Array();
+		for (var j = 0; j < this.elements.length; j++) {
+			arr.push(this.elements[j].key);
+		}
+		return arr;
+    };
+}
+
+//N%할인 세팅Map
+var npercentMap = new MapProduct();
+
+$(function () {
+	var ptype = $("#ptype").val();
+	if (ptype == 'U') {
+		initNpercentProduct();
+	}
+});
+
+/* 관리자단에서 사용중.. 이전 포토리뷰 */
+var Product = function(id) {
+	this.id = "";			//객체 아이디값
+	this.isdup = false;	//중복된 코드인지 여부
+	this.dup = "";			//중복된 상품 체크하기 위한 기존 상품리스트 값 ( ex> 상품코드|상품코드 ) 
+	this.isclose = false;	//상품선택 후 창 닫기 여부
+	this.width = 900;
+	this.height = 580;
+	this.top = 0;
+	this.left = 0;
+	//제품정보
+	this.seq = "";			//제품코드
+	this.prdNm = "";		//제품명
+	this.win = null;			//오픈창 객체
+	this.init(id);				//초기화.
+	this.isDialog = false;
+	this.url = "";			//팝업 url
+	this.dupId = "";
+}
+
+Product.prototype = {
+	
+	init:function(id) {	
+		if(id != "") {
+			this.id= id;
+			window.document.getElementById(id).setAttribute("href", "javascript:product.open()");	//click event 추가
+		}
+	},	
+	open:function() {	
+		if(this.isDialog) {
+			var loading_html = "<TABLE width='100%' height='100%' align='center'>";
+			loading_html = loading_html + "<TR><TD align='center'><img src ='/kr/ko/resources/adm/images/ajax-loader.gif'></TD></TR></TABLE>";
+			$('#' + this.id).html(loading_html);
+			$('#' + this.id).load(this.url).dialog({
+				autoOpen: true,
+				width: this.width,
+				height: this.height,
+				close:function() {
+					$(this).dialog("close");
+				}
+			});
+		} else {
+			this.win = window.open(this.url,'winProductSearch','left=0,top=0,width='+this.width+',height='+this.height);
+			if(this.win) this.win.focus();
+		}		
+	},
+	getParam:function() {
+//		var param = "method=productListPop";
+//		return param;
+	},	
+	setIsclose:function(bl) {
+		this.isclose = bl;
+	},
+	setWidth:function(w) {
+		this.width = w;
+	},
+	setHeight:function(h) {
+		this.height = h;
+	},
+	setDup:function(dup) {
+		this.dup = dup;
+	},
+	setDupSelectBox:function(id) {
+		var str = "";
+		if(this.dupId == "") this.dupId = id;
+		$("#"+this.dupId+" option").each(function() {
+			//alert('a1 : ' + $(this).index() + " = " + $(this).val());
+			if($(this).index() > 0) str += "|"; 
+			str += $(this).val();
+		});
+		this.dup = str;
+	},
+	setIsDialog:function(bl) {
+		this.isDialog = bl;
+	},
+	setUrl:function(url) {
+		this.url = url;
+	},
+	end:function() {
+		
+		//중복체크 여부 확인.
+		//var isdup = $("#frmSearch input[name=isdup]").val().replace(/ /gi, '');
+		
+		if(this.dup != "") {
+			if(this.dup.indexOf(this.seq) > -1) {
+				this.isdup = true;
+				return false;
+			}
+		}		
+		return true;
+	},	
+	close:function() {
+		if(this.isDialog) {
+			$('#' + this.id).dialog("close");
+		} else {
+			window.close();
+		}
+	}	
+}
+
+/**
+ * 2016.02
+ * 리뉴얼용 제품 추가 리스트
+ * */
+function totSum() {
+	var totQty = Number(0);
+	var totPrc = Number(0);
+	var qty = Number(0);
+	var price = Number(0);
+	var totQty_add = Number(0);
+	var totPrc_add = Number(0);
+	var dcRate = 0;//N%할인
+	
+	// 단품제품
+	if($("#singlePrdYn").val() === 'Y') {
+		qty = parseInt($('#qty').text());
+		price = parseInt($('.priceArea .inniB div p').text().replace(/[^\d]+/g, ''));	// 할인가
+		totQty += qty;
+		//totPrc += qty * price;
+		dcRate = npercent(totQty, "");//N개구매시 N%할인 추가.
+		totPrc += qty * price * (100 - dcRate) * 0.01;
+		
+		$('#sum').html($.jutil.setComma(totPrc+"")+'원');
+		
+		if($('#stdPrc').length!=0) {
+			var stdPrc = parseInt($('.priceArea .inniB div span').text().replace(/[^\d]+/g, ''));	// 정가
+			$('#stdPrc').html($.jutil.setComma(Number(totQty) * Number(stdPrc)+"")+'원');
+		}
+	}
+	
+	// 옵션 및 추가 구성품
+	$('.optList .add').each(function() { // 추가구성품
+		qty = parseInt($(this).find('.prdQty').text());
+		price = parseInt($(this).find('.optPrice').text().replace(/[^\d]+/g, ''));
+		totQty_add += qty;
+		totPrc_add += qty * price;
+	});
+	
+	$('.optList .opt').each(function() {	// 옵션제품
+		qty = parseInt($(this).find('.prdQty').text());
+		price = parseInt($(this).find('.optPrice').text().replace(/[^\d]+/g, ''));
+		totQty += qty;
+		totPrc += qty * price;
+	});
+	
+	// 복수구매 제품 가격 계산
+	if ($("#multiPurType").val()) {
+		if (totQty != 0) {
+			var multiPurArr = $("#multiPurType").val().split("+");
+			var m = parseInt(multiPurArr[0]);
+			var n = parseInt(multiPurArr[1]);
+			var multiPurCnt = m + n;
+			var mod = totQty % (multiPurCnt);
+			
+			if (mod < m) {
+				totPrc = (Math.floor(totQty / (multiPurCnt)) * m + mod) * price;
+			} else {
+				totPrc = Math.ceil(totQty / (multiPurCnt)) * m * price;
+			}
+		}
+	}
+	
+	/*$('#totCnt').html((totQty + totQty_add) +'개');
+	$('#totSum').html($.jutil.setComma(parseInt(totPrc + totPrc_add) +"")+'원');*/
+	
+	var totQ = totQty + totQty_add;
+	var totP = totPrc + totPrc_add;
+	
+	//N개구매시 N%할인 추가.
+	if (npercentFl == "Y") {
+		totP = totQ * parseInt(removeComma(dc_salPrc+""));
+		dcRate = npercent(totQ, totP);
+	}
+	
+	$('#totCnt').html((totQ) +'개');
+	$('#totSum').html($.jutil.setComma(parseInt(totP * (100 - dcRate) * 0.01) +"")+'원');
+	
+
+}
+
+/**
+ * 20190911
+ * 제품 계산
+ * */
+function calcTotalAmt(page) {
+	if(page == '' || page == null || typeof page === 'undefined')
+		page = '';
+	var totQty = Number(0);
+	var totPrc = Number(0);
+	var qty = Number(0);
+	var price = Number(0);
+	var totQty_add = Number(0);
+	var totPrc_add = Number(0);
+	var dcRate = 0;//N%할인
+	// 단품제품
+	if($("#singlePrdYn").val() === 'Y') {
+		
+		if(page == 'view'){
+            qty = parseInt($('.pdtViewCount').find('.countArea .pdtQty').val());
+			price = parseInt($('.pdtViewOrderTxt .price .num').text().replace(/[^\d]+/g, ''));	// 할인가
+		}else{
+			qty = parseInt($('.pdtInfoWrap .pdtCont .countArea .pdtQty').val());
+			price = parseInt($('.pdtInfoWrap .pdtCont .num').text().replace(/[^\d]+/g, ''));	// 할인가
+		}
+		
+		if (0 === qty) {
+	    	alert("0보다 큰 수를 입력해주세요.");
+	    	qtyCalc("plus");
+	    	return;
+	    }
+		
+		totQty += qty;
+		//totPrc += qty * price;
+		dcRate = npercent(totQty, "");//N개구매시 N%할인 추가.
+		totPrc += qty * price * (100 - dcRate) * 0.01;
+		
+        $('#totSum').html($.jutil.setComma(totPrc+""));
+        
+		var stdPrcObj;
+		if(page == 'view'){
+			stdPrcObj = $('.pdtViewOrderTxt .price').find("#stdPrc");
+		}else{
+			stdPrcObj = $('.pdtInfoWrap .pdtCont .price').find("#stdPrc");
+		}
+		/*if(stdPrcObj.length!=0) {
+			var stdPrc = parseInt(stdPrcObj.text().replace(/[^\d]+/g, ''));	// 정가
+			stdPrcObj.html($.jutil.setComma(Number(totQty) * Number(stdPrc)+"")+'원');
+		}*/
+	}
+	
+	// 옵션 및 추가 구성품
+    $('.optList .add').each(function() { // 추가구성품
+		qty = parseInt($(this).find('input.pdtQty').val());
+		price = parseInt($(this).find('#pdtPrice').val().replace(/[^\d]+/g, ''));
+		
+		if (0 === qty) {
+	    	alert("0보다 큰 수를 입력해주세요.");
+	    	qtyCalc("plus");
+	    	return;
+	    }
+		
+		totQty_add += qty;
+		totPrc_add += qty * price;
+	});
+    
+	
+    $('.optList .opt').each(function() {    // 옵션제품
+		qty = parseInt($(this).find('input.pdtQty').val());
+		price = parseInt($(this).find('#pdtPrice').val().replace(/[^\d]+/g, ''));
+		
+		if (0 === qty) {
+	    	alert("0보다 큰 수를 입력해주세요.");
+	    	qtyCalc("plus");
+	    	return;
+	    }
+		
+		totQty += qty;
+		totPrc += qty * price;
+	});
+	
+	// 복수구매 제품 가격 계산
+	if ($("#multiPurType").val()) {
+		if (totQty != 0) {
+			var multiPurArr = $("#multiPurType").val().split("+");
+			var m = parseInt(multiPurArr[0]);
+			var n = parseInt(multiPurArr[1]);
+			var multiPurCnt = m + n;
+			var mod = totQty % (multiPurCnt);
+			
+			if (mod < m) {
+				totPrc = (Math.floor(totQty / (multiPurCnt)) * m + mod) * price;
+			} else {
+				totPrc = Math.ceil(totQty / (multiPurCnt)) * m * price;
+			}
+		}
+	}
+	
+	/*$('#totCnt').html((totQty + totQty_add) +'개');
+	$('#totSum').html($.jutil.setComma(parseInt(totPrc + totPrc_add) +"")+'원');*/
+	
+	var totQ = totQty + totQty_add;
+	var totP = totPrc + totPrc_add;
+	
+	//N개구매시 N%할인 추가.
+	if (npercentFl == "Y") {
+		totP = totQ * parseInt(removeComma(dc_salPrc+""));
+		dcRate = npercent(totQ, totP);
+	}
+
+	if(isNaN(totP)){
+		totP = Number(0);
+	}
+	//$('#totCnt').html((totQ) +'개');
+	$('#totSum').html($.jutil.setComma(parseInt(totP * (100 - dcRate) * 0.01) +""));
+	
+
+}
+
+/* 추가 구성품 */
+function addPrdMax() {	// 최대 구매 가능 갯수 리턴
+	var prdQty = Number(0);
+	var maxQty = Number($('#selTitAdd').attr("maxQty"));
+	var addQty = Number($('#selTitAdd').attr("addQty"));
+	
+	// 단품제품
+	if($("#singlePrdYn").val() === 'Y') {
+		prdQty += parseInt($('#qty').val());
+	}
+	// 옵션제품
+	$('.optList .opt').each(function() {	// 옵션제품
+		prdQty += parseInt($(this).find('.pdtQty').val());
+	});
+		
+	//addQty = parseInt(prdQty / addQty);	//	 현재 추가 구성품 가능 갯수
+	addQty = parseInt(prdQty * addQty);	//	 현재 추가 구성품 가능 갯수( / -> * 변경)
+	
+	if(maxQty != 0 && addQty > maxQty) {
+		addQty = maxQty;
+	}
+	
+	return addQty;
+}
+
+/* 옵션 및 추가 구성품 */
+function addOpt(sapPrdCd) {
+	$('#msg').hide();
+
+	var maxQty = Number(0);
+	var totQty = Number(0);
+	var fl = $('#optList'+sapPrdCd).attr("class").replace(' noColorChip', '');
+	var qty = Number($('#optCnt'+sapPrdCd).html());
+	
+	if(fl=='add') {
+		maxQty = addPrdMax();
+	} else {
+		maxQty = Number($('#selTitOpt').attr("maxQty"));
+	}
+	
+	$('.optList .'+fl+' .prdQty').each(function() {	//	제품 갯수
+		totQty += Number($(this).html());
+	});
+	
+	if(totQty < maxQty) {
+		qty += Number(1);
+	} else {
+		$('#msg').html('최대 구매 수량은 '+maxQty+'개 입니다.').show();
+	}
+
+	$('#optCnt'+sapPrdCd).html(qty);
+
+	totSum();
+}
+
+function minusOpt(sapPrdCd) {
+	$('#msg').hide();
+
+	var qty = $('#optCnt'+sapPrdCd).html();
+	if(qty > 1) {
+		qty = Number(qty) - Number(1);
+		$('#optCnt'+sapPrdCd).html(qty);
+		
+		// 본품을 수량조절 하는경우에는 추가구성품을 초기화함.
+		if ($('#optCnt'+sapPrdCd).closest("li").hasClass("opt")) {
+			$('.optList .add').remove();
+		}
+	}
+
+	totSum();
+}
+
+/*
+ * 1. 옵션이 있는 상품의 옵션 선택 시
+ * 2. 추가 구성품 선택 시
+ */
+function choiceOption(sapPrdCd, fl) {
+	var _$pdtOpt = $('#pdtOpt'+sapPrdCd);
+	var prdNm = _$pdtOpt.attr("kindNm");
+	var stkStat = _$pdtOpt.attr("stkStat");
+	var stk = _$pdtOpt.attr("stk");
+	var salPrc = _$pdtOpt.attr("salPrc");
+	
+	dc_salPrc = salPrc;
+	
+	$('#msg').hide();
+	$('#optAlt').hide();
+	$("#selTitOpt").attr("sapCd", "");
+	
+	var addPrdQty = Number(0);	// 추가구성품 개수
+	var prdQty = Number(0);		// 옵션제품 개수
+	
+	//단품
+	if($("#singlePrdYn").val() === 'Y') {
+		prdQty += parseInt($('#qty').text());
+	}
+	
+	// 옵션상품
+	$('.optList .opt').each(function() {
+		prdQty += parseInt($(this).find('.prdQty').text());
+	});
+	// 추가상품
+	$('.optList .add').each(function() {
+		addPrdQty += parseInt($(this).find('.prdQty').text());
+	});
+	
+	if(fl=='opt') {	
+		//2016.07.29 by thkim class명으로 체크하던 것을 id값으로 체크되도로 변경	if($('.colorChip').length!=0) {
+		if($('#colorChipOpt').length!=0) {
+			$('#selTitOpt').html(prdNm);
+		}
+		//일시 품절인 경우 입고 알림 레이어 호출
+		if(stkStat == '2' && stk <= 0) {
+			$("#selTitOpt").attr("sapCd", sapPrdCd);
+			$('#optAlt').show();
+			return;
+		}
+		var m = $('#selTitOpt').attr("maxQty");
+		if(prdQty >= Number(m)) {	//합산 된 수량이 최대구매수량보다 큰 경우
+			$('#msg').html('최대 구매 수량은 '+m+'개 입니다.').show();
+			return;
+		}
+	} else if(fl=='add') {
+		
+		if(prdQty === 0) {
+			$('#msg').html('본품을 선택해주세요.').show();
+			return;
+		}
+		if(addPrdQty >= addPrdMax()) {
+			$('#msg').html('추가상품의 최대 구매 수량은 '+addPrdMax()+'개 입니다.').show();
+			return;
+		}
+	}
+	
+	//선택 한 옵션이 처음 선택 된 것이라면
+	if($('#optList'+sapPrdCd).length==0) {
+//		<li id="optList+sapPrdCd">
+//		<span class="iconChip"><img src="/kr/ko/resources/web/images/temp/colorChip_opt.png" width="16" alt="1호  봄 닯은 코랄"/></span>
+//		<p class="optName">1호  봄 닯은 코랄1호</p>
+//		<div class="optCount">
+//			<a href="javascript:minusOpt('sapPrdCd');" class="btnMinus"><em>-</em><span></span></a>
+//			<p id="optCnt+sapPrdCd" class="prdQty">1</p>
+//			<a href="javascript:addOpt('sapPrdCd');" class="btnPlus"><em>+</em><span></span></a>
+//		</div>
+//		<p class="optPrice">23,500원</p>
+//		<button class="optBtn"><span class="hide">옵션삭제</span></button>
+//	</li>
+		
+		var element = document.getElementById('optList');
+	
+		var li = document.createElement('li');
+		var span1 = document.createElement('span');
+		var span2 = document.createElement('span');
+		var span3 = document.createElement('span');
+		var p1 = document.createElement('p');
+		var p2 = document.createElement('p');
+		var p3 = document.createElement('p');
+		var div = document.createElement('div');
+		var a1 = document.createElement('a');
+		var a2 = document.createElement('a');
+		var em1 = document.createElement('em');
+		var em2 = document.createElement('em');
+		var button = document.createElement('button');
+		
+		li.className = fl;
+		//2016.07.29 by thkim class명으로 체크하던 것을 id값으로 체크되도로 변경	if(fl=='opt' && $('.colorChip').length!=0) {	
+		if(fl=='opt' && $('#colorChipOpt').length!=0) {
+			var span4 = document.createElement('span');
+			var img = document.createElement('img');
+			
+			span4.className = 'iconChip';
+			
+			img.width = '16';
+			img.onerror = "this.src='/kr/ko/resources/web/images/temp/colorChip_opt.png'";
+			img.src = document.getElementById('color'+sapPrdCd).src;
+			img.alt = document.getElementById('color'+sapPrdCd).alt;
+			
+			span4.appendChild(img);
+			li.appendChild(span4);
+		} else {
+			li.className += ' noColorChip';
+		}
+
+		$('#pdtPrice').hide();
+		$('#totalSum').show();
+					
+		li.id = 'optList'+sapPrdCd;
+		p2.id = 'optCnt' +sapPrdCd;
+					
+		p1.className = 'optName';
+		p2.className = 'prdQty';
+		div.className = 'optCount';
+		a1.className = 'btnMinus';
+		a2.className = 'btnPlus';
+		p3.className = 'optPrice';
+		button.className = 'optBtn';
+		span3.className = 'hide';
+					
+		a1.href = 'javascript:minusOpt(\''+sapPrdCd+'\');';
+		a2.href = 'javascript:addOpt(\''+sapPrdCd+'\');';
+	
+		p1.innerHTML = prdNm;
+		p2.innerHTML = '1';
+		p3.innerHTML = salPrc+'원';
+		em1.innerHTML = '-';
+		em2.innerHTML = '+';
+		span3.innerHTML = '옵션삭제';
+		button.className = 'optBtn';
+		button.onclick = function() {
+			this.parentElement.parentElement.removeChild(this.parentElement);
+			
+			if($("#optList li").length==0) {
+				if($(".optBox").length!=0) {
+					$('#pdtPrice').show();
+					$('#selTitOpt').html('옵션을 선택하세요');
+				}
+				
+				if($(".addBox").length!=0) {
+					$('#totalSum').hide();
+					$('#selTitAdd').html('추가 구성품을 선택하세요');
+				}
+			}
+			
+			// 옵션이 삭제되면 상품사은품 선택수량도 0으로 초기화 시킴.
+			$("p[name=giftQty]").text(0);
+			
+			totSum();
+			$('#optAlt').hide();
+		};
+		
+		li.appendChild(p1);
+		li.appendChild(div);
+		li.appendChild(p3);
+		li.appendChild(button);
+		div.appendChild(a1);
+		div.appendChild(p2);
+		div.appendChild(a2);
+		a1.appendChild(em1);
+		a1.appendChild(span1);
+		a2.appendChild(em2);
+		a2.appendChild(span2);
+		button.appendChild(span3);
+		
+		element.appendChild(li);
+		
+		totSum();
+	}
+}
+
+/*
+ * 신규-layer 변경
+ * 1. 옵션이 있는 상품의 옵션 선택 시
+ * 2. 추가 구성품 선택 시
+ */
+function selectOption(sapPrdCd, fl, page) {
+	if(page == '' || page == null || typeof page === 'undefined')
+		page = '';
+	var _$pdtOpt = $('#pdtOpt'+sapPrdCd);
+	var prdNm = _$pdtOpt.attr("kindNm");
+	var stkStat = _$pdtOpt.attr("stkStat");
+	var stk = _$pdtOpt.attr("stk");
+	var salPrc = _$pdtOpt.attr("salPrc");
+	
+	dc_salPrc = salPrc;
+	
+	$("#selTitOpt").attr("sapCd", "");
+	
+	var addPrdQty = Number(0);	// 추가구성품 개수
+	var prdQty = Number(0);		// 옵션제품 개수
+	
+	//단품
+	if($("#singlePrdYn").val() === 'Y') {
+		prdQty += parseInt($('#qty').val());
+	}
+	
+	// 옵션상품
+	$('.optList .opt').each(function() {
+		prdQty += parseInt($(this).find('.pdtQty').val());
+	});
+	// 추가상품
+	$('.optList .add').each(function() {
+		addPrdQty += parseInt($(this).find('.pdtQty').val());
+	});
+	
+	
+	if(fl=='opt') {	
+		var m = $('#selTitOpt').attr("maxQty");
+		if(prdQty >= Number(m)) {	//합산 된 수량이 최대구매수량보다 큰 경우
+			//$('#msg').html('최대 구매 수량은 '+m+'개 입니다.').show();
+			alert('최대 구매 수량은 '+m+'개 입니다.')
+			return;
+		}
+	} else if(fl=='add') {
+		
+		if(prdQty === 0) {
+			//$('#msg').html('본품을 선택해주세요.').show();
+			alert('본품을 선택해주세요.')
+			return;
+		}
+		if(addPrdQty >= addPrdMax()) {
+			//$('#msg').html('추가상품의 최대 구매 수량은 '+addPrdMax()+'개 입니다.').show();
+			alert('추가상품의 최대 구매 수량은 '+addPrdMax()+'개 입니다.');
+			return;
+		}
+		
+		if(page == "view" && $("#singlePrdYn").val() === 'Y'){
+			page = "view";
+		}
+	}
+
+	//이미 선택 된 옵션
+	if($('#optList').find('#optList'+sapPrdCd).length) alert('이미 선택된 옵션입니다.');
+	
+	//선택 한 옵션이 처음 선택 된 것이라면
+	if($('#optList'+sapPrdCd).length==0) {
+//		<li id="optList+sapPrdCd">
+//		<span class="iconChip"><img src="/kr/ko/resources/web/images/temp/colorChip_opt.png" width="16" alt="1호  봄 닯은 코랄"/></span>
+//		<p class="optName">1호  봄 닯은 코랄1호</p>
+//		<div class="optCount">
+//			<a href="javascript:minusOpt('sapPrdCd');" class="btnMinus"><em>-</em><span></span></a>
+//			<p id="optCnt+sapPrdCd" class="prdQty">1</p>
+//			<a href="javascript:addOpt('sapPrdCd');" class="btnPlus"><em>+</em><span></span></a>
+//		</div>
+//		<p class="optPrice">23,500원</p>
+//		<button class="optBtn"><span class="hide">옵션삭제</span></button>
+//	</li>
+		/*<li>
+		<span class="name">C13 라이트 베이지</span>
+		<div class="countArea">
+			<button type="button" class="btnMinus" onclick="qtyCalc('minus')">수량 빼기</button>
+			<input type="text" value="1" class="pdtQty">
+			<button type="button" class="btnPlus" onclick="qtyCalc('plus')">수량 더하기</button>
+			<input type="hidden" value="" id="pdtPrice">
+		</div>
+		<button type="button" class="btnDel">삭제</button>
+	</li>
+		*/
+		
+		var element = document.getElementById('optList');
+	
+		var li = document.createElement('li');
+		var span1 = document.createElement('span');
+		var button1 = document.createElement('button');
+		var button2 = document.createElement('button');
+		var button3 = document.createElement('button');
+		var input = document.createElement('input');
+		var div = document.createElement('div');
+		var hidden = document.createElement('input');
+		
+		
+		li.className = fl;
+		span1.className = 'name';
+		span1.innerHTML = prdNm;
+		
+		li.appendChild(span1);
+
+		//$('#pdtPrice').hide();
+		//$('#totalSum').show();
+					
+		li.id = 'optList'+sapPrdCd;
+		input.id = 'optCnt' +sapPrdCd;
+					
+
+		input.className = 'pdtQty';
+		input.type = 'text';
+		input.value = 1;
+		div.className = 'countArea';
+		button1.className = 'btnMinus';
+		button1.type = 'button';
+		button1.innerHTML = '수량 빼기';
+		button2.className = 'btnPlus';
+		button2.type = 'button';
+		button2.innerHTML = '수량 더하기';
+
+		button3.className = 'btnDel';
+		button3.type = 'button';
+					
+		//button1.onclick = 'javascript:minusOpt(\''+sapPrdCd+'\');';
+		//button2.onclick = 'javascript:addOpt(\''+sapPrdCd+'\');';
+		
+		hidden.type= 'hidden';
+		hidden.name = 'pdtPrice';
+		hidden.id = 'pdtPrice';
+		hidden.value = salPrc;
+
+		button1.onclick = function() {
+			//minusOpt(sapPrdCd);
+			qtyCalc('minus');
+		};
+		
+		button2.onclick = function() {
+			//addOpt(sapPrdCd);
+			qtyCalc('plus');
+		};
+		
+		button3.onclick = function() {
+			this.parentElement.parentElement.removeChild(this.parentElement);
+			
+			if($("#optList li").length==0) {
+				if($(".optBox").length!=0) {
+					$('#pdtPrice').show();
+					$('#selTitOpt').html('옵션을 선택하세요');
+				}
+				
+				if($(".addBox").length!=0) {
+					//$('#totalSum').hide();
+					$('#selTitAdd').html('추가 구성품을 선택하세요');
+				}
+			}
+			
+			// 옵션이 삭제되면 상품사은품 선택수량도 0으로 초기화 시킴.
+			//$("p[name=giftQty]").text(0);
+			
+			calcTotalAmt(page);
+		};
+		
+		var preQty = "";
+		$(input).on("change", function(){
+			
+			var qty = $(this).val();
+			
+			var maxQty = Number(0);
+			var totQty = Number(0);
+			
+			if(qty > 1){
+				if ($('#optCnt'+sapPrdCd).closest("li").hasClass("opt") && preQty > qty) {
+					$('.optList .add').remove();
+				}	
+				
+				if(fl=='add') {
+					maxQty = addPrdMax();
+				} else {
+					maxQty = Number($('#selTitOpt').attr("maxQty"));
+				}
+				
+				$('.optList .'+fl+' .pdtQty').each(function() {	//	제품 갯수
+					totQty += Number($(this).val());
+				});
+				
+				var calcQty = Number(0);
+				if(totQty > maxQty) {
+					calcQty = maxQty - (totQty - qty); 
+					alert('이 제품의 1회 최대 구매 가능한 수량은 '+maxQty+'개 입니다.');
+					//$(this).val(maxQty);
+					$(this).val(calcQty);
+				}
+			}
+			
+			if ($('#optCnt'+sapPrdCd).closest("li").hasClass("opt")) {
+				preQty = qty;
+			}
+			calcTotalAmt(page);
+		});
+		
+		li.appendChild(div);
+		li.appendChild(button3);
+		div.appendChild(button1);
+		div.appendChild(input);
+		div.appendChild(button2);
+		div.appendChild(hidden);
+		element.appendChild(li);
+		
+		calcTotalAmt(page);
+	}
+}
+
+/* 단품 */
+function minusQty() {
+	$('#msg').hide();
+	var qty = Number($('#qty').html());
+
+	if(qty != 1) {
+		qty -= 1;
+		$('#qty').html(qty);
+		$('.priceArea dt').html("합계 금액");
+	} 
+
+	if(qty == 1) {
+		$('.priceArea dt').html("판매가");
+	}
+
+	totSum();
+}
+
+function addQty(maxQty) {
+	$('#msg').hide();
+	var qty = Number($('#qty').html());
+	$('.priceArea dt').html("합계 금액");
+
+	if(qty < maxQty) {
+		qty += 1;
+	} else {
+		$('#msg').html('최대 구매 수량은 '+maxQty+'개 입니다.');
+		$('#msg').show();
+	}
+	$('#qty').html(qty);
+	
+	totSum();
+}
+
+/* 개별 입고 알림 : product_stockAlarm.jsp */
+function optionStockAlarm() {
+	var sapCd = $('#selTitOpt').attr("sapCd");
+	var element = document.getElementById("stockOpt");
+	
+	element.innerHTML = "";
+	
+	//2016.07.29 by thkim class명으로 체크하던 것을 id값으로 체크되도로 변경	if($('.colorChip').length!=0) {
+	if($('#colorChipOpt').length!=0) {
+		var img = document.createElement('img');
+		var o = $('#color'+sapCd);
+		
+		img.src = o.attr("src");
+		img.alt = o.attr("alt");
+		img.style.cssText = "width:14px;vertical-align:top;";
+		
+		element.appendChild(img);
+	}
+	
+	var span = document.createElement('span');
+	var input = document.createElement('input');
+	
+	input.type = "hidden";
+	input.name = "sapCd";
+	input.value = sapCd;
+	
+	span.innerHTML = " "+$("#selTitOpt").html();
+	
+	element.appendChild(span);
+	element.appendChild(input);
+
+	layerPop('pdtStockPop');
+}
+
+/* 개별 입고 알림 : product_stockAlarm_renew.jsp */
+function optionStockAlarm(sapCd, isSnsLogin) {
+	if(isSnsLogin == 'Y'){
+		layerOpen('fullMemberBenefit');
+		return;
+	}
+	
+	var addHtml = "";
+	
+	if (sapCd.indexOf('@addPrd') > -1) {
+		var obj = sapCd.split('@');
+		var addPrdObj = obj[0].split('_');
+		var addPrdNm = $("#pdtOpt"+obj[0]).attr("kindNm");
+		
+		$('input[name="prdSeq"]').val(addPrdObj[0]);
+		$("#name").html(addPrdNm);
+		addHtml = "<input type='hidden' name='sapCd' value='"+addPrdObj[1]+"'>";
+	}
+	else {
+		var opt = $("#pdtOpt"+sapCd).attr("kindNm");
+		
+		if(opt == null || typeof opt === "undefined" || opt == ""){
+			opt = "";
+		}
+		addHtml = opt + "<input type='hidden' name='sapCd' value='"+sapCd+"'>";
+	}
+	$("#stockOpt").html(addHtml);
+	layerOpen('pdtStockPop');
+}
+
+/*N개구매시 N%할인 추가...start...*/
+
+//화면 로딩시N%할인 파라미터 세팅
+function initNpercentProduct() {
+	
+	$.ajax({
+		type:'post',
+		dataType : "json",
+		data:{},
+		async:false,
+		url:'/kr/ko/ProductGetNpercentList.do',
+		error:function(e){alert(e);},
+		success:function(data){
+			//map(제품코드+구매수량 , 할인%수) 
+			$.each(data.npercentList, function(i) {
+				if (!npercentMap.containsKey(this.prdSeq + "_" +this.qty)) {
+					npercentMap.put(this.prdSeq + "_" +this.qty, this.dcRate);
+				}
+			});
+			
+			//최대할인수량
+			$.each(data.maxQtyList, function(i) {
+				if (!npercentMap.containsKey(this.prdSeq + "_maxQtyNp")) {
+					npercentMap.put(this.prdSeq + "_maxQtyNp", this.max);
+				}
+			});
+			
+			if (npercentMap.get($('#prdSeq').val() + "_maxQtyNp") != null) {
+				npercentFl = "Y";
+			}
+			
+			if (npercentFl == "Y") {
+				var totQty = Number(0);
+				var totPrc = Number(0);
+				var qty = Number(0);
+				var price = Number(0);
+				
+				// 단품제품시 로딩시 금액 변경.
+				if($("#singlePrdYn").val() === 'Y') {
+					qty = parseInt($('#qty').text());
+					price = parseInt($('.priceArea .inniB div p').text().replace(/[^\d]+/g, ''));	// 할인가
+					totQty += qty;
+					var dcRate = npercent(totQty, "");
+					totPrc += qty * price * (100 - dcRate) * 0.01;
+					
+					$('#sum').html($.jutil.setComma(totPrc+"")+'원');
+					
+					if($('#stdPrc').length!=0) {
+						var stdPrc = parseInt($('.priceArea .inniB div span').text().replace(/[^\d]+/g, ''));	// 정가
+						$('#stdPrc').html($.jutil.setComma(Number(totQty) * Number(stdPrc)+"")+'원');
+					}
+				}
+			}
+		}
+	});
+}
+
+//N개구매시 N%할인 계산
+function npercent (totQ, totP) {
+	var dcRate = 0;
+	var prdSeq = $('#prdSeq').val();
+	if (totQ > 0) {
+		var maxQty = npercentMap.get(prdSeq + "_maxQtyNp");
+		if (totQ >= maxQty) {
+			dcRate = npercentMap.get(prdSeq + "_" + maxQty);
+		} else {
+			dcRate = npercentMap.get(prdSeq + "_" + totQ);
+		}
+		
+		if (dcRate == undefined) {
+			dcRate = 0;
+		}
+		if (totP != "") {
+			$('.optPrice').html(parseInt(totP * (100 - dcRate) * 0.01/totQ) +'원');
+		}
+		
+	}
+	
+	return dcRate;
+	//return totP;
+}
+/*N개구매시 N%할인 추가 ...end...*/
+
+/********************************************************************
+*  Function Name    : removeComma()
+*  Description      : String에서 "," -> "" 로 치환.
+*  Input Data       : input - 대상 String.
+*  Output Data      : String
+*  사용되는 Function : xReplace();
+/********************************************************************/
+function removeComma(input) {
+	return xReplace(input,",","");
+}
+
+/********************************************************************
+*  Function Name    : xReplace()
+*  Description      : 정규식으로 문자 치환.
+*  Input Data       : input - 대상 String.
+*					  e - 찾으려는 문자.
+*					  k	- 바꾸려는 문자.
+*  Output Data      : String
+*  사용되는 Function : 
+/********************************************************************/
+function xReplace(input,e,k) {
+	var tmp = String(input);
+	return tmp.replace(new RegExp(e,"ig"), k);
+}
